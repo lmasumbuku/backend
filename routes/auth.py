@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal
-from backend.models import Restaurant
+from database import SessionLocal
+from models import Restaurant
 import jwt
 import datetime
 import secrets
