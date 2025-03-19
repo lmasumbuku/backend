@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from database import get_db
 from models import Restaurant
 from pydantic import BaseModel
 import jwt
@@ -12,7 +12,7 @@ router = APIRouter()
 SECRET_KEY = secrets.token_hex(32)
 
 # Modèle de requête attendu pour l'inscription
-class UserRegister(BaseModel):
+class UserLogin(BaseModel):
     username: str
     password: str
 
