@@ -60,6 +60,8 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
+    print(user.dict())  # Affiche les données reçues pour debug
+    return {"message": "Debug : connexion en cours"}
     existing_user = db.query(Restaurant).filter(Restaurant.username == user.username).first()
     if not existing_user or existing_user.password != user.password:
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
