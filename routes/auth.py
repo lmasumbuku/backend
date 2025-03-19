@@ -59,10 +59,11 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     return {"message": "Inscription réussie"}
     
 @router.post("/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    user = db.query(Restaurant).filter(Restaurant.username == username, Restaurant.password == password).first()
-    if not user:
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    existing_user = db.query(Restaurant).filter(Restaurant.username == user.username).first()
+    if not existing_user or existing_user.password != user.password:
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
 
-    token = create_token(username)
-    return {"token": token}
+    # Génération du token
+    access_token = jwt.encode({"sub": user.username}, "secret", algorithm="HS256")
+    return {"access_token": access_token, "token_type": "bearer"}
