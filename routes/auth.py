@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Restaurant
+from pydantic import BaseModel
 import jwt
 import datetime
 import secrets
