@@ -10,6 +10,11 @@ router = APIRouter()
 
 SECRET_KEY = secrets.token_hex(32)
 
+# Modèle de requête attendu pour l'inscription
+class UserRegister(BaseModel):
+    username: str
+    password: str
+
 # Fonction pour obtenir la session de la base
 def get_db():
     db = SessionLocal()
