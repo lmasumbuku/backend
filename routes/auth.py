@@ -41,18 +41,20 @@ def decode_token(token: str):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token invalide")
 
+# ✅ Route d'inscription qui attend un JSON dans le Body
 @router.post("/register")
-def register(username: str, password: str, db: Session = Depends(get_db)):
-    existing_user = db.query(Restaurant).filter(Restaurant.username == username).first()
+def register(user: UserRegister, db: Session = Depends(get_db)):
+    # Vérifier si l'utilisateur existe déjà
+    existing_user = db.query(Restaurant).filter(Restaurant.username == user.username).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Utilisateur déjà existant")
 
-    new_user = Restaurant(username=username, password=password)
+    # Création du nouvel utilisateur
+    new_user = Restaurant(username=user.username, password=user.password)
     db.add(new_user)
     db.commit()
-    token = create_token(username)
-    return {"token": token}
-
+    return {"message": "Inscription réussie"}
+    
 @router.post("/login")
 def login(username: str, password: str, db: Session = Depends(get_db)):
     user = db.query(Restaurant).filter(Restaurant.username == username, Restaurant.password == password).first()
