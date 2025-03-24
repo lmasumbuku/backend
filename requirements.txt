@@ -3,3 +3,4 @@ uvicorn
 sqlalchemy
 PyJWT
 psycopg2-binary
+python-jose
