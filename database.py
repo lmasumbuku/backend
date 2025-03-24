@@ -7,7 +7,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://bdd_restaurant_user:VCy0V
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 Base = declarative_base()
+
 # ✅ Ajout de la fonction get_db
 def get_db():
     db = SessionLocal()
