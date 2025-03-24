@@ -44,3 +44,13 @@ def reject_order(order_id: int, db: Session = Depends(get_db)):
     order.status = "rejected"
     db.commit()
     return {"message": "Commande refusée"}
+
+from fastapi import APIRouter, Depends
+from utils.auth import decode_token
+from models import Restaurant
+
+router = APIRouter()
+
+@router.get("/mes-commandes")
+def get_orders(current_user: Restaurant = Depends(decode_token)):
+    return {"message": f"Bienvenue {current_user.username}, voici vos commandes."}
