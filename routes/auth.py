@@ -12,7 +12,7 @@ router = APIRouter()
 SECRET_KEY = secrets.token_hex(32)
 
 # Modèle de requête attendu pour l'inscription
-class UserRegistrer(BaseModel):
+class UserRegister(BaseModel):
     username: str
     password: str
 
