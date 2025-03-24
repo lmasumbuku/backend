@@ -16,6 +16,11 @@ class UserRegistrer(BaseModel):
     username: str
     password: str
 
+# ✅ Définition de UserLogin aussi, pour la suite
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 # Fonction pour obtenir la session de la base
 def get_db():
     db = SessionLocal()
@@ -56,6 +61,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     new_user = Restaurant(username=user.username, password=user.password)
     db.add(new_user)
     db.commit()
+    db.refresh(new_user)
     return {"message": "Inscription réussie"}
     
 @router.post("/login")
