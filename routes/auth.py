@@ -61,14 +61,31 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return {"message": "Inscription réussie"}
     
+from fastapi.security import OAuth2PasswordRequestForm
+import jwt
+from datetime import datetime, timedelta
+
+SECRET_KEY = "supersecretkey"  # 🔐 À stocker dans une variable d'environnement en production
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Durée de validité du token
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
-    print(user.dict())  # Affiche les données reçues pour debug
-    return {"message": "Debug : connexion en cours"}
-    existing_user = db.query(Restaurant).filter(Restaurant.username == user.username).first()
-    if not existing_user or existing_user.password != user.password:
-        raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    restaurateur = db.query(Restaurant).filter(Restaurant.username == user.username).first()
 
-    # Génération du token
-    access_token = jwt.encode({"sub": user.username}, "secret", algorithm="HS256")
-    return {"access_token": access_token, "token_type": "bearer"}
+    if not restaurateur or restaurateur.password != user.password:
+        raise HTTPException(status_code=401, detail="Identifiants invalides")
+
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": restaurateur.username,
+        "exp": expire
+    }
+
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {"access_token": token, "token_type": "bearer"}
