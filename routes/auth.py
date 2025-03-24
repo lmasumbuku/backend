@@ -50,9 +50,6 @@ def decode_token(token: str):
 # ✅ Route d'inscription qui attend un JSON dans le Body
 @router.post("/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
-    print(user.dict())  # Affiche les données reçues
-    return {"message": "Debug : inscription en cours"}
-    # Vérifier si l'utilisateur existe déjà
     existing_user = db.query(Restaurant).filter(Restaurant.username == user.username).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Utilisateur déjà existant")
