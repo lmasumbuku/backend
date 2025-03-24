@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, SessionLocal
 from models import Restaurant
 from pydantic import BaseModel
 import jwt
