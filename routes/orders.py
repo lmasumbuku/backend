@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse
-from models import Restaurant
 from typing import List
 from utils.auth import decode_token
 
@@ -56,3 +55,13 @@ router = APIRouter()
 @router.get("/mes-commandes")
 def get_orders(current_user: Restaurant = Depends(decode_token)):
     return {"message": f"Bienvenue {current_user.username}, voici vos commandes."}
+
+from fastapi import APIRouter, Depends
+from auth import decode_token  # Assure-toi que ce chemin est correct selon ton projet
+
+router = APIRouter()
+
+@router.get("/mes-commandes")
+def mes_commandes_utilisateur(user=Depends(decode_token)):
+    return {"message": f"Bienvenue {user.username}, voici vos commandes."}
+
