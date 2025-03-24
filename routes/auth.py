@@ -9,7 +9,9 @@ import secrets
 
 router = APIRouter()
 
-SECRET_KEY = secrets.token_hex(32)
+SECRET_KEY = "supersecretkey"  # 🔐 À stocker dans une variable d'environnement en production
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Durée de validité du token
 
 # Modèle de requête attendu pour l'inscription
 class UserRegister(BaseModel):
@@ -65,10 +67,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "supersecretkey"  # 🔐 À stocker dans une variable d'environnement en production
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Durée de validité du token
-
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -96,9 +94,6 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Restaurant
 import jwt
-
-SECRET_KEY = "ton_secret_key"  # le même que dans login
-ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
