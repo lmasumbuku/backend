@@ -52,6 +52,6 @@ from models import Restaurant
 
 router = APIRouter()
 
-@router.post("/mes-commandes")
+@router.get("/mes-commandes")
 def get_orders(current_user: Restaurant = Depends(decode_token)):
     return {"message": f"Bienvenue {current_user.username}, voici vos commandes."}
