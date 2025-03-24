@@ -89,3 +89,30 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
     return {"access_token": token, "token_type": "bearer"}
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from database import get_db
+from models import Restaurant
+import jwt
+
+SECRET_KEY = "ton_secret_key"  # le même que dans login
+ALGORITHM = "HS256"
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+def decode_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Restaurant:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Token invalide")
+        user = db.query(Restaurant).filter(Restaurant.username == username).first()
+        if user is None:
+            raise HTTPException(status_code=401, detail="Utilisateur non trouvé")
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expiré")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token invalide")
