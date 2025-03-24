@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse
 from typing import List
+from utils.auth import decode_token
 
 router = APIRouter()
 
