@@ -4,6 +4,7 @@ from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse, Restaurant
 from typing import List
 from routes.auth import decode_token
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -34,7 +35,14 @@ def create_order(order: OrderCreate,
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-    return new_order
+    
+    # Convertir les items en liste pour la réponse
+    return {
+        "id": new_order.id,
+        "restaurant_id": new_order.restaurant_id,
+        "items": new_order.items.split(","),
+        "status": new_order.status
+    }
 
 # 🔐 Accepter une commande
 @router.post("/accept/{order_id}")
