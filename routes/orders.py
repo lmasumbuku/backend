@@ -7,7 +7,7 @@ from routes.auth import decode_token
 
 router = APIRouter()
 
-# DB Session
+# Obtenir la session DB
 def get_db():
     db = SessionLocal()
     try:
@@ -15,46 +15,37 @@ def get_db():
     finally:
         db.close()
 
-# ✅ Route protégée par token (à placer en premier)
-@router.get("/mes-commandes")
-def mes_commandes_utilisateur(user: Restaurant = Depends(decode_token)):
-    return {"message": f"Bienvenue {user.username}, voici vos commandes."}
+# 🔐 Voir MES commandes (à partir du token)
+@router.get("/mes-commandes", response_model=List[OrderResponse])
+def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    orders = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
+    return orders
 
-# Route : Créer commande
+# 🔐 Créer une commande
 @router.post("/create", response_model=OrderResponse)
-def create_order(order: OrderCreate, db: Session = Depends(get_db)):
-    new_order = OrderModel(
-        restaurant_id=order.restaurant_id,
-        items=",".join(order.items),
-        status="pending"
-    )
+def create_order(order: OrderCreate, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    new_order = OrderModel(restaurant_id=current_user.id, items=",".join(order.items), status="pending")
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
     return new_order
 
-# Route : Accepter commande
+# 🔐 Accepter une commande
 @router.post("/accept/{order_id}")
-def accept_order(order_id: int, db: Session = Depends(get_db)):
-    order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
+def accept_order(order_id: int, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.restaurant_id == current_user.id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Commande non trouvée")
     order.status = "accepted"
     db.commit()
     return {"message": "Commande acceptée"}
 
-# Route : Refuser commande
+# 🔐 Refuser une commande
 @router.post("/reject/{order_id}")
-def reject_order(order_id: int, db: Session = Depends(get_db)):
-    order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
+def reject_order(order_id: int, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.restaurant_id == current_user.id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Commande non trouvée")
     order.status = "rejected"
     db.commit()
     return {"message": "Commande refusée"}
-
-# Route : Voir les commandes par restaurant_id (à placer en dernier)
-@router.get("/{restaurant_id}", response_model=List[OrderResponse])
-def get_orders(restaurant_id: int, db: Session = Depends(get_db)):
-    orders = db.query(OrderModel).filter(OrderModel.restaurant_id == restaurant_id).all()
-    return orders
