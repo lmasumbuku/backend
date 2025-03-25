@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel
-from typing import List
+from typing import Optional
 
 Base = declarative_base()
 
@@ -71,19 +71,20 @@ class OrderResponse(BaseModel):
 # MenuItem
 class MenuItemCreate(BaseModel):
     name: str
-    description: str
+    description: Optional[str]
     price: float
 
 class MenuItemUpdate(BaseModel):
-    name: str
-    description: str
-    price: float
+    name: Optional[str]
+    description: Optional[str]
+    price: Optional[float]
 
 class MenuItemResponse(BaseModel):
     id: int
     name: str
-    description: str
+    description: Optional[str]
     price: float
+    restaurant_id: int
 
     class Config:
         orm_mode = True
