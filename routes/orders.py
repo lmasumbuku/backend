@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse, Restaurant
 from typing import List
-from auth import decode_token  # Assure-toi que ce chemin est correct selon ton projet
+from routes.auth import decode_token  # Assure-toi que ce chemin est correct selon ton projet
 
 router = APIRouter()
 
