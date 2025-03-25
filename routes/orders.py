@@ -23,8 +23,14 @@ def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session 
 
 # 🔐 Créer une commande
 @router.post("/create", response_model=OrderResponse)
-def create_order(order: OrderCreate, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
-    new_order = OrderModel(restaurant_id=current_user.id, items=",".join(order.items), status="pending")
+def create_order(order: OrderCreate, 
+                 db: Session = Depends(get_db), 
+                 current_user: Restaurant = Depends(decode_token)):
+    new_order = OrderModel(
+        restaurant_id=current_user.id,
+        items=",".join(order.items),
+        status="pending"
+    )
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
