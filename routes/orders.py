@@ -18,8 +18,8 @@ def get_db():
 
 # 🔐 Voir MES commandes (à partir du token)
 @router.get("/mes-commandes", response_model=List[OrderResponse])
-def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
-    orders = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
+def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(SessionLocal)):
+    orders = db.query(OrderResponse).filter(OrderResponse.restaurant_id == current_user.id).all()
     return orders
 
 # 🔐 Créer une commande
