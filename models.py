@@ -34,7 +34,6 @@ class MenuItem(Base):
 
 # ✅ Modèles Pydantic pour FastAPI
 class OrderCreate(BaseModel):
-    restaurant_id: int
     items: List[str]
 
 class OrderResponse(BaseModel):
