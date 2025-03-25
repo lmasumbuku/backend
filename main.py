@@ -3,6 +3,7 @@ from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from database import Base, engine
+import models
 
 app = FastAPI()
 
