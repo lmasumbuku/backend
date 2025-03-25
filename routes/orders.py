@@ -16,10 +16,19 @@ def get_db():
         db.close()
 
 # ✅ Route protégée pour récupérer les commandes du restaurateur connecté
-@router.get("/mes-commandes", response_model=List[OrderResponse])
-def mes_commandes_utilisateur(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
-    commandes = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
-    return commandes
+@router.get("/mes-commandes")
+def mes_commandes_utilisateur(
+    current_user: Restaurant = Depends(decode_token),
+    db: Session = Depends(get_db)
+):
+    commandes = db.query(Order).filter(Order.restaurant_id == current_user.id).all()
+    if not commandes:
+        raise HTTPException(status_code=404, detail="Aucune commande trouvée")
+    
+    return {
+        "restaurant": current_user.username,
+        "commandes": [order.items for order in commandes]
+    }
 
 # ✅ Liste des commandes pour un restaurant spécifique
 @router.get("/orders/{restaurant_id}", response_model=List[OrderResponse])
