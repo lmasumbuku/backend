@@ -1,28 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import MenuItem, MenuItemCreate, MenuItemUpdate
-from routes.auth import decode_token
+from models import MenuItem, MenuItemCreate, MenuItemUpdate, Restaurant
 from typing import List
+from routes.auth import decode_token  # On utilise l'authentification via token
 
 router = APIRouter()
 
-# 🔸 Lister tous les plats du menu pour le restaurateur connecté
-@router.get("/", response_model=List[MenuItemCreate])
-def list_menu_items(current_user=Depends(decode_token), db: Session = Depends(get_db)):
-    return db.query(MenuItem).filter(MenuItem.restaurant_id == current_user.id).all()
-
-# 🔸 Obtenir le détail d’un plat spécifique
-@router.get("/{item_id}", response_model=MenuItemCreate)
-def get_menu_item(item_id: int, current_user=Depends(decode_token), db: Session = Depends(get_db)):
-    item = db.query(MenuItem).filter(MenuItem.id == item_id, MenuItem.restaurant_id == current_user.id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Plat non trouvé")
-    return item
-
-# 🔸 Ajouter un nouveau plat
-@router.post("/add", response_model=MenuItemCreate)
-def add_menu_item(item: MenuItemCreate, current_user=Depends(decode_token), db: Session = Depends(get_db)):
+# ✅ Ajouter un plat au menu
+@router.post("/add", response_model=MenuItem)
+def add_item(
+    item: MenuItemCreate,
+    db: Session = Depends(get_db),
+    current_user: Restaurant = Depends(decode_token)
+):
     new_item = MenuItem(
         name=item.name,
         description=item.description,
@@ -34,25 +25,43 @@ def add_menu_item(item: MenuItemCreate, current_user=Depends(decode_token), db: 
     db.refresh(new_item)
     return new_item
 
-# 🔸 Modifier un plat existant
-@router.put("/update/{item_id}", response_model=MenuItemCreate)
-def update_menu_item(item_id: int, updated_data: MenuItemUpdate, current_user=Depends(decode_token), db: Session = Depends(get_db)):
-    item = db.query(MenuItem).filter(MenuItem.id == item_id, MenuItem.restaurant_id == current_user.id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Plat non trouvé")
-    item.name = updated_data.name
-    item.description = updated_data.description
-    item.price = updated_data.price
-    db.commit()
-    db.refresh(item)
-    return item
+# ✅ Voir tous les plats du menu du restaurateur connecté
+@router.get("/mes-plats", response_model=List[MenuItem])
+def get_my_items(
+    db: Session = Depends(get_db),
+    current_user: Restaurant = Depends(decode_token)
+):
+    return db.query(MenuItem).filter(MenuItem.restaurant_id == current_user.id).all()
 
-# 🔸 Supprimer un plat
+# ✅ Supprimer un plat de son menu
 @router.delete("/delete/{item_id}")
-def delete_menu_item(item_id: int, current_user=Depends(decode_token), db: Session = Depends(get_db)):
+def delete_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: Restaurant = Depends(decode_token)
+):
     item = db.query(MenuItem).filter(MenuItem.id == item_id, MenuItem.restaurant_id == current_user.id).first()
     if not item:
-        raise HTTPException(status_code=404, detail="Plat non trouvé")
+        raise HTTPException(status_code=404, detail="Plat non trouvé ou accès non autorisé")
     db.delete(item)
     db.commit()
     return {"message": "Plat supprimé avec succès"}
+
+# ✅ Modifier un plat existant
+@router.put("/edit/{item_id}", response_model=MenuItem)
+def update_item(
+    item_id: int,
+    item_update: MenuItemUpdate,
+    db: Session = Depends(get_db),
+    current_user: Restaurant = Depends(decode_token)
+):
+    item = db.query(MenuItem).filter(MenuItem.id == item_id, MenuItem.restaurant_id == current_user.id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Plat non trouvé ou accès non autorisé")
+
+    item.name = item_update.name
+    item.description = item_update.description
+    item.price = item_update.price
+    db.commit()
+    db.refresh(item)
+    return item
