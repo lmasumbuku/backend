@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 
 Base = declarative_base()
 
