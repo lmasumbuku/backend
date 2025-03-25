@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse, Restaurant
 from typing import List
-from routes.auth import decode_token  # ✅ Chemin correct à adapter si besoin
+from auth import decode_token  # Assure-toi que ce chemin est correct selon ton projet
 
 router = APIRouter()
 
@@ -15,38 +15,27 @@ def get_db():
     finally:
         db.close()
 
-# ✅ Route protégée pour récupérer les commandes du restaurateur connecté
-@router.get("/mes-commandes")
-def mes_commandes_utilisateur(
-    current_user: Restaurant = Depends(decode_token),
-    db: Session = Depends(get_db)
-):
-    commandes = db.query(Order).filter(Order.restaurant_id == current_user.id).all()
-    if not commandes:
-        raise HTTPException(status_code=404, detail="Aucune commande trouvée")
-    
-    return {
-        "restaurant": current_user.username,
-        "commandes": [order.items for order in commandes]
-    }
-
-# ✅ Liste des commandes pour un restaurant spécifique
-@router.get("/orders/{restaurant_id}", response_model=List[OrderResponse])
+# ✅ Liste des commandes pour un restaurant spécifique (accessible sans token)
+@router.get("/{restaurant_id}", response_model=List[OrderResponse])
 def get_orders(restaurant_id: int, db: Session = Depends(get_db)):
     orders = db.query(OrderModel).filter(OrderModel.restaurant_id == restaurant_id).all()
     return orders
 
-# ✅ Création d'une commande
-@router.post("/orders/create", response_model=OrderResponse)
+# ✅ Créer une commande
+@router.post("/create", response_model=OrderResponse)
 def create_order(order: OrderCreate, db: Session = Depends(get_db)):
-    new_order = OrderModel(restaurant_id=order.restaurant_id, items=",".join(order.items), status="pending")
+    new_order = OrderModel(
+        restaurant_id=order.restaurant_id,
+        items=",".join(order.items),
+        status="pending"
+    )
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
     return new_order
 
-# ✅ Acceptation d'une commande
-@router.post("/orders/accept/{order_id}")
+# ✅ Accepter une commande
+@router.post("/accept/{order_id}")
 def accept_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not order:
@@ -55,8 +44,8 @@ def accept_order(order_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Commande acceptée"}
 
-# ✅ Rejet d'une commande
-@router.post("/orders/reject/{order_id}")
+# ✅ Refuser une commande
+@router.post("/reject/{order_id}")
 def reject_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not order:
@@ -64,3 +53,9 @@ def reject_order(order_id: int, db: Session = Depends(get_db)):
     order.status = "rejected"
     db.commit()
     return {"message": "Commande refusée"}
+
+# ✅ Voir ses propres commandes (avec authentification via token)
+@router.get("/mes-commandes")
+def mes_commandes_utilisateur(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    commandes = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
+    return commandes
