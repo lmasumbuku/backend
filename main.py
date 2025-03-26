@@ -8,19 +8,9 @@ import models
 from database import Base, engine
 from fastapi import APIRouter
 
-create_router = APIRouter()
-
-@create_router.get("/create-tables")
-def create_tables():
-    try:
-        Base.metadata.create_all(bind=engine)
-        return {"message": "Tables créées avec succès ✅"}
-    except Exception as e:
-        return {"error": str(e)}
-
-app.include_router(create_router)
-
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
 
 # Autoriser les requêtes depuis le frontend React
 app.add_middleware(
@@ -40,3 +30,14 @@ app.include_router(menu_router, prefix="/menu")
 @app.get("/")
 def root():
     return {"message": "Bienvenue sur l'API des restaurateurs !"}
+create_router = APIRouter()
+
+@create_router.get("/create-tables")
+def create_tables():
+    try:
+        Base.metadata.create_all(bind=engine)
+        return {"message": "Tables créées avec succès ✅"}
+    except Exception as e:
+        return {"error": str(e)}
+
+app.include_router(create_router)
