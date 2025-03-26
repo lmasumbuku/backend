@@ -3,9 +3,19 @@ from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from database import Base, engine
+from fastapi.middleware.cors import CORSMiddleware
 import models
 
 app = FastAPI()
+
+# Autoriser les requêtes depuis le frontend React
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En production : remplace "*" par l'URL de ton frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)  # Création des tables
 
