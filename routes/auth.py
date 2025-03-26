@@ -39,16 +39,6 @@ def create_token(username: str):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
-# ✅ Ajoute cette fonction pour la gestion des tokens
-def decode_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload["sub"]
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expiré")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token invalide")
-
 # ✅ Route d'inscription qui attend un JSON dans le Body
 @router.post("/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
