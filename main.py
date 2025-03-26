@@ -5,6 +5,20 @@ from routes.menu import router as menu_router
 from database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 import models
+from database import Base, engine
+from fastapi import APIRouter
+
+create_router = APIRouter()
+
+@create_router.get("/create-tables")
+def create_tables():
+    try:
+        Base.metadata.create_all(bind=engine)
+        return {"message": "Tables créées avec succès ✅"}
+    except Exception as e:
+        return {"error": str(e)}
+
+app.include_router(create_router)
 
 app = FastAPI()
 
