@@ -7,6 +7,11 @@ router = APIRouter(prefix="/debug", tags=["debug"])
 
 @router.get("/reset-menu-items")
 def reset_menu_items():
+    print(">>> [DEBUG] Route /reset-menu-items appelée")
+    ...
+
+@router.get("/reset-menu-items")
+def reset_menu_items():
     # 1. Suppression de la table menu_items si elle existe
     with engine.connect() as connection:
         connection.execute(text("DROP TABLE IF EXISTS menu_items CASCADE;"))
