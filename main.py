@@ -3,16 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
+from routes.debug import router as debug_router
 from database import Base, engine
 import models
 from fastapi import APIRouter
 
 app = FastAPI()
-
-from routes.debug import router as debug_router
-app.include_router(debug_router, prefix="/debug")
-
-Base.metadata.create_all(bind=engine)
 
 # Autoriser les requêtes depuis le frontend React
 app.add_middleware(
@@ -28,6 +24,7 @@ Base.metadata.create_all(bind=engine)  # Création des tables
 app.include_router(auth_router, prefix="/auth")
 app.include_router(orders_router, prefix="/orders")
 app.include_router(menu_router, prefix="/menu")
+app.include_router(debug_router, prefix="/debug")
 
 @app.get("/")
 def root():
