@@ -15,7 +15,7 @@ Base.metadata.create_all(bind=engine)
 # Autoriser les requêtes depuis le frontend React
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # En production : remplace "*" par l'URL de ton frontend
+    allow_origins=["https://frontend-46us.onrender.com"],  # En production : remplace "*" par l'URL de ton frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
