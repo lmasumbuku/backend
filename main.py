@@ -1,11 +1,10 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from database import Base, engine
-from fastapi.middleware.cors import CORSMiddleware
 import models
-from database import Base, engine
 from fastapi import APIRouter
 
 app = FastAPI()
