@@ -6,6 +6,8 @@ from routes.menu import router as menu_router
 from database import Base, engine
 import models
 from fastapi import APIRouter
+from routes.debug import router as debug_router
+app.include_router(debug_router)
 
 app = FastAPI()
 
