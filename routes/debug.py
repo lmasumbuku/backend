@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from database import get_db
+from fastapi import APIRouter
+from sqlalchemy import text
+from database import engine, Base
+from models import MenuItem
 
-router = APIRouter()
+router = APIRouter(prefix="/debug", tags=["debug"])
 
-@router.get("/debug/drop-menu-items")
-def drop_menu_items(db: Session = Depends(get_db)):
-    db.execute("DROP TABLE IF EXISTS menu_items CASCADE")
-    db.commit()
-    return {"message": "✅ Table menu_items supprimée"}
+@router.get("/reset-menu-items")
+def reset_menu_items():
+    # 1. Suppression de la table menu_items si elle existe
+    with engine.connect() as connection:
+        connection.execute(text("DROP TABLE IF EXISTS menu_items CASCADE;"))
+        connection.commit()
+
+    # 2. Recréation de la table menu_items
+    Base.metadata.create_all(bind=engine, tables=[MenuItem.__table__])
+
+    return {"message": "La table menu_items a été réinitialisée avec succès ✅"}
