@@ -4,7 +4,6 @@ from database import SessionLocal
 from models import Order as OrderModel, OrderCreate, OrderResponse, Restaurant
 from typing import List
 from routes.auth import decode_token
-from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -18,9 +17,19 @@ def get_db():
 
 # 🔐 Voir MES commandes (à partir du token)
 @router.get("/mes-commandes", response_model=List[OrderResponse])
-def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(SessionLocal)):
-    orders = db.query(OrderResponse).filter(OrderResponse.restaurant_id == current_user.id).all()
-    return orders
+def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
+    orders = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
+
+    # Transformation des données pour la réponse
+    response = []
+    for order in orders:
+        response.append(OrderResponse(
+            id=order.id,
+            restaurant_id=order.restaurant_id,
+            items=order.items.split(","),
+            status=order.status
+        ))
+    return response
 
 # 🔐 Créer une commande
 @router.post("/create", response_model=OrderResponse)
@@ -36,13 +45,12 @@ def create_order(order: OrderCreate,
     db.commit()
     db.refresh(new_order)
     
-    # Convertir les items en liste pour la réponse
-    return {
-        "id": new_order.id,
-        "restaurant_id": new_order.restaurant_id,
-        "items": new_order.items.split(","),
-        "status": new_order.status
-    }
+    return OrderResponse(
+        id=new_order.id,
+        restaurant_id=new_order.restaurant_id,
+        items=new_order.items.split(","),
+        status=new_order.status
+    )
 
 # 🔐 Accepter une commande
 @router.post("/accept/{order_id}")
