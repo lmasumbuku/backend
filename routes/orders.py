@@ -19,19 +19,17 @@ def get_db():
 @router.get("/mes-commandes", response_model=List[OrderResponse])
 def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
     orders = db.query(OrderModel).filter(OrderModel.restaurant_id == current_user.id).all()
+    return [
+        {
+            "id": order.id,
+            "restaurant_id": order.restaurant_id,
+            "items": order.items.split(","),
+            "status": order.status
+        }
+        for order in orders
+    ]
 
-    # Transformation des données pour la réponse
-    response = []
-    for order in orders:
-        response.append(OrderResponse(
-            id=order.id,
-            restaurant_id=order.restaurant_id,
-            items=order.items.split(","),
-            status=order.status
-        ))
-    return response
-
-# 🔐 Créer une commande
+# ✅ Créer une commande (acceptée automatiquement)
 @router.post("/create", response_model=OrderResponse)
 def create_order(order: OrderCreate, 
                  db: Session = Depends(get_db), 
@@ -39,20 +37,20 @@ def create_order(order: OrderCreate,
     new_order = OrderModel(
         restaurant_id=current_user.id,
         items=",".join(order.items),
-        status="pending"
+        status="accepted"  # ✅ Commande acceptée automatiquement
     )
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
     
-    return OrderResponse(
-        id=new_order.id,
-        restaurant_id=new_order.restaurant_id,
-        items=new_order.items.split(","),
-        status=new_order.status
-    )
+    return {
+        "id": new_order.id,
+        "restaurant_id": new_order.restaurant_id,
+        "items": new_order.items.split(","),
+        "status": new_order.status
+    }
 
-# 🔐 Accepter une commande
+# ✅ Accepter une commande (optionnel)
 @router.post("/accept/{order_id}")
 def accept_order(order_id: int, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
     order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.restaurant_id == current_user.id).first()
@@ -62,7 +60,7 @@ def accept_order(order_id: int, current_user: Restaurant = Depends(decode_token)
     db.commit()
     return {"message": "Commande acceptée"}
 
-# 🔐 Refuser une commande
+# ✅ Refuser une commande (optionnel)
 @router.post("/reject/{order_id}")
 def reject_order(order_id: int, current_user: Restaurant = Depends(decode_token), db: Session = Depends(get_db)):
     order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.restaurant_id == current_user.id).first()
