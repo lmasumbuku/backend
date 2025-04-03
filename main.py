@@ -4,7 +4,7 @@ from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from routes.debug import router as debug_router
-from routes.vocal_routes import vocal_routes_router
+from routes.vocal_routes import router as vocal_routes_router
 from database import Base, engine
 import models
 from fastapi import APIRouter
