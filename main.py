@@ -26,7 +26,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(orders_router, prefix="/orders")
 app.include_router(menu_router, prefix="/menu")
 app.include_router(debug_router)
-app.include_router(vocal_routes.router)
+app.include_router(vocal_router)
 
 @app.get("/")
 def root():
