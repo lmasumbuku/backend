@@ -5,6 +5,7 @@ from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from routes.debug import router as debug_router
 from routes.vocal_routes import router as vocal_router
+from routes.voiceflow_commande import router as voiceflow_commande_router
 from database import Base, engine
 import models
 from fastapi import APIRouter
@@ -27,6 +28,7 @@ app.include_router(orders_router, prefix="/orders")
 app.include_router(menu_router, prefix="/menu")
 app.include_router(debug_router)
 app.include_router(vocal_router)
+app.include_router(voiceflow_commande_router)
 
 @app.get("/")
 def root():
