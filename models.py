@@ -6,7 +6,8 @@ from typing import List, Optional
 
 Base = declarative_base()
 
-# 🔸 Modèle SQLAlchemy : Restaurant
+# ──────────────── SQLAlchemy Models ────────────────
+
 class Restaurant(Base):
     __tablename__ = "restaurants"
 
@@ -14,7 +15,6 @@ class Restaurant(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)
 
-    # ✅ Infos supplémentaires du restaurateur
     nom_restaurant = Column(String, nullable=True)
     nom_representant = Column(String, nullable=True)
     prenom_representant = Column(String, nullable=True)
@@ -25,18 +25,18 @@ class Restaurant(Base):
     orders = relationship("Order", back_populates="restaurant")
     menu_items = relationship("MenuItem", back_populates="restaurant")
 
-# 🔸 Modèle SQLAlchemy : Order
+
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
-    items = Column(String)  # items séparés par des virgules
+    items = Column(String)
     status = Column(String, default="pending")
 
     restaurant = relationship("Restaurant", back_populates="orders")
 
-# 🔸 Modèle SQLAlchemy : MenuItem
+
 class MenuItem(Base):
     __tablename__ = "menu_items"
 
@@ -64,8 +64,15 @@ class RestaurantBase(BaseModel):
 class RestaurantCreate(RestaurantBase):
     pass
 
-class RestaurantUpdate(RestaurantBase):
-    pass
+class RestaurantUpdate(BaseModel):
+    username: Optional[str]
+    password: Optional[str]
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
 
 class RestaurantResponse(BaseModel):
     id: int
@@ -77,17 +84,11 @@ class RestaurantResponse(BaseModel):
     email: Optional[EmailStr]
     numero_appel: Optional[str]
 
-class RestaurantUpdate(BaseModel):
-    username: Optional[str]
-    password: Optional[str]
-    nom_restaurant: Optional[str]
-    nom_representant: Optional[str]
-    prenom_representant: Optional[str]
-    adresse_postale: Optional[str]
-    email: Optional[EmailStr]
-    numero_appel: Optional[str]
+    class Config:
+        from_attributes = True  # ⚠️ Pydantic v2 (anciennement orm_mode = True)
 
-   # 🔹 Order
+
+# 🔹 Order
 class OrderCreate(BaseModel):
     restaurant_id: int
     items: List[str]
@@ -98,7 +99,10 @@ class OrderResponse(BaseModel):
     items: List[str]
     status: str
 
-   # 🔹 MenuItem
+    class Config:
+        from_attributes = True
+
+# 🔹 MenuItem
 class MenuItemCreate(BaseModel):
     name: str
     description: Optional[str]
@@ -117,4 +121,4 @@ class MenuItemResponse(BaseModel):
     restaurant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
