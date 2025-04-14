@@ -77,6 +77,16 @@ class RestaurantResponse(BaseModel):
     email: Optional[EmailStr]
     numero_appel: Optional[str]
 
+class RestaurantUpdate(BaseModel):
+    username: Optional[str]
+    password: Optional[str]
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
+
    # 🔹 Order
 class OrderCreate(BaseModel):
     restaurant_id: int
