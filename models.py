@@ -60,3 +60,22 @@ class RestaurantBase(BaseModel):
     adresse_postale: Optional[str]
     email: Optional[EmailStr]
     numero_appel: Optional[str]
+
+class RestaurantCreate(RestaurantBase):
+    pass
+
+class RestaurantUpdate(RestaurantBase):
+    pass
+
+class RestaurantResponse(BaseModel):
+    id: int
+    username: str
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
+
+    class Config:
+        orm_mode = True
