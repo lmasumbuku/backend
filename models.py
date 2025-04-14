@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
 Base = declarative_base()
@@ -13,6 +13,14 @@ class Restaurant(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+
+    # ✅ Infos supplémentaires du restaurateur
+    nom_restaurant = Column(String, nullable=True)
+    nom_representant = Column(String, nullable=True)
+    prenom_representant = Column(String, nullable=True)
+    adresse_postale = Column(String, nullable=True)
+    email = Column(String, unique=True, nullable=True)
+    numero_appel = Column(String, unique=True, nullable=True)
 
     orders = relationship("Order", back_populates="restaurant")
     menu_items = relationship("MenuItem", back_populates="restaurant")
@@ -42,49 +50,12 @@ class MenuItem(Base):
 
 # ──────────────── Pydantic Schemas ────────────────
 
-# Restaurant
-class RestaurantCreate(BaseModel):
+# 🔹 Restaurant
+class RestaurantBase(BaseModel):
     username: str
     password: str
-
-class RestaurantResponse(BaseModel):
-    id: int
-    username: str
-
-    class Config:
-        orm_mode = True
-
-# Order
-class OrderCreate(BaseModel):
-    restaurant_id: int
-    items: List[str]
-
-class OrderResponse(BaseModel):
-    id: int
-    restaurant_id: int
-    items: List[str]
-    status: str
-
-    class Config:
-        orm_mode = True
-
-# MenuItem
-class MenuItemCreate(BaseModel):
-    name: str
-    description: Optional[str]
-    price: float
-
-class MenuItemUpdate(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
-    price: Optional[float]
-
-class MenuItemResponse(BaseModel):
-    id: int
-    name: str
-    description: Optional[str]
-    price: float
-    restaurant_id: int
-
-    class Config:
-        orm_mode = True
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email
