@@ -59,3 +59,4 @@ class RestaurantBase(BaseModel):
     prenom_representant: Optional[str]
     adresse_postale: Optional[str]
     email: Optional[EmailStr]
+    numero_appel: Optional[str]
