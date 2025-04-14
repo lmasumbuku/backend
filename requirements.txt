@@ -5,3 +5,4 @@ PyJWT
 psycopg2-binary
 python-jose
 pydantic[email]
+email-validator
