@@ -77,5 +77,16 @@ class RestaurantResponse(BaseModel):
     email: Optional[EmailStr]
     numero_appel: Optional[str]
 
+   # 🔹 Order
+class OrderCreate(BaseModel):
+    restaurant_id: int
+    items: List[str]
+
+class OrderResponse(BaseModel):
+    id: int
+    restaurant_id: int
+    items: List[str]
+    status: str
+
     class Config:
         orm_mode = True
