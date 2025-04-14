@@ -22,4 +22,4 @@ def update_restaurant(restaurant_id: int, updates: RestaurantUpdate, db: Session
 
 # 🆕 Route pour identifier un restaurant à partir de son numéro de ligne vocale
 @router.get("/restaurant/by-numero")
-def get_restaurateur_by_numero(numero: str = Query(...), db: Session = Depends(get_
+def get_restaurateur_by_numero(numero: str = Query(...), db: Session = Depends(get_db)):
