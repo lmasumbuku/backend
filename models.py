@@ -88,5 +88,23 @@ class OrderResponse(BaseModel):
     items: List[str]
     status: str
 
+   # 🔹 MenuItem
+class MenuItemCreate(BaseModel):
+    name: str
+    description: Optional[str]
+    price: float
+
+class MenuItemUpdate(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    price: Optional[float]
+
+class MenuItemResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    price: float
+    restaurant_id: int
+
     class Config:
         orm_mode = True
