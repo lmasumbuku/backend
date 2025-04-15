@@ -1,9 +1,14 @@
+from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Restaurant, RestaurantUpdate, RestaurantResponse
 
 router = APIRouter()
+
+@router.get("/restaurants", response_model=List[schemas.RestaurantOut])
+def get_all_restaurants(db: Session = Depends(get_db)):
+    return db.query(models.Restaurant).all()
 
 # 🔄 Mettre à jour les informations d’un restaurateur
 @router.put("/restaurant/{restaurant_id}", response_model=RestaurantResponse)
