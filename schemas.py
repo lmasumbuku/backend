@@ -35,6 +35,17 @@ class RestaurantResponse(BaseModel):
     email: Optional[EmailStr]
     numero_appel: Optional[str]
 
+class RestaurantOut(BaseModel):
+    id: int
+    username: str
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
+    menu_items: List[MenuItemResponse] = []
+    
     class Config:
         from_attributes = True
 
