@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Order as OrderModel, OrderCreate, OrderResponse, Restaurant
+from models import Order as OrderModel, Restaurant
+from schemas import OrderCreate, OrderResponse
 from typing import List
 from routes.auth import decode_token
 
