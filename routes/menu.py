@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import MenuItem, MenuItemCreate, MenuItemUpdate, MenuItemResponse, Restaurant
+from models import MenuItem, Restaurant
+from schemas import MenuItemCreate, MenuItemUpdate, MenuItemResponse
 from routes.auth import decode_token
 from typing import List
 
