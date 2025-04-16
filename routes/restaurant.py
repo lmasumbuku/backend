@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Restaurant, RestaurantUpdate, RestaurantResponse
+from models import Restaurant
 from schemas import RestaurantUpdate, RestaurantResponse, RestaurantCreate
 
 router = APIRouter()
