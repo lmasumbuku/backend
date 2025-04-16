@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Restaurant
-from schemas import RestaurantUpdate, RestaurantResponse, RestaurantCreate, RestaurantOut
+from schemas import RestaurantBase, RestaurantUpdate, RestaurantResponse, RestaurantCreate, RestaurantOut
 
 router = APIRouter()
 
