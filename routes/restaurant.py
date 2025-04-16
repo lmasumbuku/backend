@@ -7,6 +7,17 @@ from schemas import RestaurantUpdate, RestaurantResponse, RestaurantCreate, Rest
 
 router = APIRouter()
 
+@router.post("/restaurants", response_model=RestaurantBase)
+def create_restaurant(restaurant: RestaurantCreate, db: Session = Depends(get_db)):
+    db_restaurant = db.query(Restaurant).filter(Restaurant.phone_number == restaurant.phone_number).first()
+    if db_restaurant:
+        raise HTTPException(status_code=400, detail="Un restaurant avec ce numéro existe déjà.")
+    new_restaurant = Restaurant(**restaurant.dict())
+    db.add(new_restaurant)
+    db.commit()
+    db.refresh(new_restaurant)
+    return new_restaurant
+    
 @router.get("/restaurants", response_model=List[RestaurantOut])
 def get_all_restaurants(db: Session = Depends(get_db)):
     return db.query(models.Restaurant).all()
