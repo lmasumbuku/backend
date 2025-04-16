@@ -1,32 +1,76 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import List, Optional
 
-# ✅ Ce modèle représente ce que le frontend envoie pour s’inscrire
-class RestaurantCreate(BaseModel):
-    name: str
-    legal_representative: str
-    address: str
-    email: EmailStr
-    call_number: str
+# 🔹 Restaurant
+class RestaurantBase(BaseModel):
     username: str
     password: str
-
-# ✅ Ce modèle représente les champs modifiables
-class RestaurantUpdate(BaseModel):
-    name: Optional[str]
-    legal_representative: Optional[str]
-    address: Optional[str]
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
     email: Optional[EmailStr]
-    call_number: Optional[str]
+    numero_appel: Optional[str]
 
-# ✅ Ce modèle représente la réponse envoyée vers le frontend
-class RestaurantOut(BaseModel):
+class RestaurantCreate(RestaurantBase):
+    pass
+
+class RestaurantUpdate(BaseModel):
+    username: Optional[str]
+    password: Optional[str]
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
+
+class RestaurantResponse(BaseModel):
     id: int
-    name: str
-    legal_representative: str
-    address: str
-    email: EmailStr
-    call_number: str
+    username: str
+    nom_restaurant: Optional[str]
+    nom_representant: Optional[str]
+    prenom_representant: Optional[str]
+    adresse_postale: Optional[str]
+    email: Optional[EmailStr]
+    numero_appel: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+# 🔹 Order
+class OrderCreate(BaseModel):
+    restaurant_id: int
+    items: List[str]
+
+class OrderResponse(BaseModel):
+    id: int
+    restaurant_id: int
+    items: List[str]
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+# 🔹 MenuItem
+class MenuItemCreate(BaseModel):
+    name: str
+    description: Optional[str]
+    price: float
+
+class MenuItemUpdate(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    price: Optional[float]
+
+class MenuItemResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    price: float
+    restaurant_id: int
+
+    class Config:
+        from_attributes = True
