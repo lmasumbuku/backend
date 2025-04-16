@@ -1,12 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
 
 Base = declarative_base()
-
-# ──────────────── SQLAlchemy Models ────────────────
 
 class Restaurant(Base):
     __tablename__ = "restaurants"
@@ -14,7 +10,6 @@ class Restaurant(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
-
     nom_restaurant = Column(String, nullable=True)
     nom_representant = Column(String, nullable=True)
     prenom_representant = Column(String, nullable=True)
@@ -47,78 +42,3 @@ class MenuItem(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
 
     restaurant = relationship("Restaurant", back_populates="menu_items")
-
-# ──────────────── Pydantic Schemas ────────────────
-
-# 🔹 Restaurant
-class RestaurantBase(BaseModel):
-    username: str
-    password: str
-    nom_restaurant: Optional[str]
-    nom_representant: Optional[str]
-    prenom_representant: Optional[str]
-    adresse_postale: Optional[str]
-    email: Optional[EmailStr]
-    numero_appel: Optional[str]
-
-class RestaurantCreate(RestaurantBase):
-    pass
-
-class RestaurantUpdate(BaseModel):
-    username: Optional[str]
-    password: Optional[str]
-    nom_restaurant: Optional[str]
-    nom_representant: Optional[str]
-    prenom_representant: Optional[str]
-    adresse_postale: Optional[str]
-    email: Optional[EmailStr]
-    numero_appel: Optional[str]
-
-class RestaurantResponse(BaseModel):
-    id: int
-    username: str
-    nom_restaurant: Optional[str]
-    nom_representant: Optional[str]
-    prenom_representant: Optional[str]
-    adresse_postale: Optional[str]
-    email: Optional[EmailStr]
-    numero_appel: Optional[str]
-
-    class Config:
-        from_attributes = True  # ⚠️ Pydantic v2 (anciennement orm_mode = True)
-
-
-# 🔹 Order
-class OrderCreate(BaseModel):
-    restaurant_id: int
-    items: List[str]
-
-class OrderResponse(BaseModel):
-    id: int
-    restaurant_id: int
-    items: List[str]
-    status: str
-
-    class Config:
-        from_attributes = True
-
-# 🔹 MenuItem
-class MenuItemCreate(BaseModel):
-    name: str
-    description: Optional[str]
-    price: float
-
-class MenuItemUpdate(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
-    price: Optional[float]
-
-class MenuItemResponse(BaseModel):
-    id: int
-    name: str
-    description: Optional[str]
-    price: float
-    restaurant_id: int
-
-    class Config:
-        from_attributes = True
