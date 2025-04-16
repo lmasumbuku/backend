@@ -3,11 +3,11 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Restaurant
-from schemas import RestaurantUpdate, RestaurantResponse, RestaurantCreate
+from schemas import RestaurantUpdate, RestaurantResponse, RestaurantCreate, RestaurantOut
 
 router = APIRouter()
 
-@router.get("/restaurants", response_model=List[schemas.RestaurantOut])
+@router.get("/restaurants", response_model=List[RestaurantOut])
 def get_all_restaurants(db: Session = Depends(get_db)):
     return db.query(models.Restaurant).all()
 
