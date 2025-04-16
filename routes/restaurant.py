@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Restaurant, RestaurantUpdate, RestaurantResponse
 from .. import schemas
+from .. import models
 
 router = APIRouter()
 
