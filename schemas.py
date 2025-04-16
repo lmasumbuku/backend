@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
+from schemas import MenuItemResponse
 
 # 🔹 Restaurant
 class RestaurantBase(BaseModel):
