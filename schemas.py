@@ -1,6 +1,15 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
-from schemas import MenuItemResponse
+
+class MenuItemResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    price: float
+    restaurant_id: int
+
+    class Config:
+        from_attributes = True
 
 # 🔹 Restaurant
 class RestaurantBase(BaseModel):
@@ -65,7 +74,6 @@ class OrderResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
 # 🔹 MenuItem
 class MenuItemCreate(BaseModel):
     name: str
@@ -76,13 +84,6 @@ class MenuItemUpdate(BaseModel):
     name: Optional[str]
     description: Optional[str]
     price: Optional[float]
-
-class MenuItemResponse(BaseModel):
-    id: int
-    name: str
-    description: Optional[str]
-    price: float
-    restaurant_id: int
 
     class Config:
         from_attributes = True
