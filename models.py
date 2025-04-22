@@ -9,7 +9,7 @@ class Restaurant(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    password = Column(String)
+    password = Column(String)  # Le mot de passe est maintenant stocké en texte haché
     nom_restaurant = Column(String, nullable=True)
     nom_representant = Column(String, nullable=True)
     prenom_representant = Column(String, nullable=True)
