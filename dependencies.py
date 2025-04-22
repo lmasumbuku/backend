@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from models import Restaurant
 from database import get_db
-from utils import SECRET_KEY, ALGORITHM
+from config import SECRET_KEY
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
