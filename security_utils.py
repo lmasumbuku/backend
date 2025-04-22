@@ -1,15 +1,9 @@
-import os
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES  # 👈 Clean import
 
-# Contexte pour le hachage des mots de passe
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Clé secrète et algo pour les tokens JWT
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
