@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from routes.auth import router as auth_router
 from routes.orders import router as orders_router
@@ -9,22 +9,22 @@ from routes.voiceflow_commande import router as voiceflow_commande_router
 from routes.restaurant import router as restaurant_router
 from routes import secure_routes
 from database import Base, engine
-import models
-from fastapi import APIRouter
 
 app = FastAPI()
 
-# Autoriser les requêtes depuis le frontend React
+# 🔐 Autoriser les requêtes depuis le frontend React (mettre l’URL exacte en prod)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-46us.onrender.com"],  # En production : remplace "*" par l'URL de ton frontend
+    allow_origins=["https://frontend-46us.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=engine)  # Création des tables
+# 🛠️ Création des tables au lancement
+Base.metadata.create_all(bind=engine)
 
+# 🔗 Inclusion des routes
 app.include_router(auth_router, prefix="/auth")
 app.include_router(orders_router, prefix="/orders")
 app.include_router(menu_router, prefix="/menu")
@@ -32,11 +32,14 @@ app.include_router(debug_router)
 app.include_router(vocal_router)
 app.include_router(voiceflow_commande_router)
 app.include_router(restaurant_router)
-app.include_router(secure_routes.router, tags=["Secure Routes"])
+app.include_router(secure_routes.router, prefix="/secure", tags=["Secure Routes"])
 
+# 🌐 Route de base
 @app.get("/")
 def root():
     return {"message": "Bienvenue sur l'API des restaurateurs !"}
+
+# 📦 Route pour créer manuellement les tables (utile en dev/debug)
 create_router = APIRouter()
 
 @create_router.get("/create-tables")
