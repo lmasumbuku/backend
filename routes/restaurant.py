@@ -13,7 +13,7 @@ from schemas import (
     LoginRequest,
     TokenResponse,
 )
-from utils import hash_password, verify_password, create_access_token
+from security_utils import hash_password, verify_password, create_access_token
 
 router = APIRouter()
 
