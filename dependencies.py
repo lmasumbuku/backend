@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from app.models.models import Restaurant
+from models import Restaurant
 from app.core.database import get_db
 from app.utils.utils import SECRET_KEY, ALGORITHM
 
