@@ -6,8 +6,8 @@ from jose import jwt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Clé secrète et algo pour les tokens JWT
-SECRET_KEY = "MA_SUPER_CLE_SECRETE"  # Remplace par une clé secrète plus sûre !
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
 
 def hash_password(password: str) -> str:
