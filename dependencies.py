@@ -3,10 +3,10 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from models import Restaurant
-from app.core.database import get_db
-from app.utils.utils import SECRET_KEY, ALGORITHM
+from database import get_db
+from utils import SECRET_KEY, ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_current_restaurant(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Restaurant:
     credentials_exception = HTTPException(
