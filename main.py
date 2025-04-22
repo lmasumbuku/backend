@@ -8,6 +8,7 @@ from routes.debug import router as debug_router
 from routes.vocal_routes import router as vocal_router
 from routes.voiceflow_commande import router as voiceflow_commande_router
 from routes.restaurant import router as restaurant_router
+from routes.status import router as status_router
 from routes import secure_routes
 from database import Base, engine
 
@@ -33,6 +34,7 @@ app.include_router(vocal_router)
 app.include_router(voiceflow_commande_router)
 app.include_router(restaurant_router)
 app.include_router(secure_routes.router, prefix="/secure", tags=["Secure Routes"])
+app.include_router(status_router)
 
 # 🌐 Route de base
 @app.get("/")
