@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
+# 🔹 MenuItem
 class MenuItemResponse(BaseModel):
     id: int
     name: str
@@ -14,7 +15,7 @@ class MenuItemResponse(BaseModel):
 # 🔹 Restaurant
 class RestaurantBase(BaseModel):
     username: str
-    password: str
+    password: str  # Le mot de passe est inclus ici pour la création et l'authentification
     nom_restaurant: Optional[str]
     nom_representant: Optional[str]
     prenom_representant: Optional[str]
@@ -59,7 +60,6 @@ class RestaurantOut(BaseModel):
     class Config:
         from_attributes = True
 
-
 # 🔹 Order
 class OrderCreate(BaseModel):
     restaurant_id: int
@@ -88,6 +88,7 @@ class MenuItemUpdate(BaseModel):
     class Config:
         from_attributes = True
 
+# 🔹 Authentification
 class LoginRequest(BaseModel):
     username: str
     password: str
