@@ -24,9 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🛠️ Création des tables au lancement
-Base.metadata.create_all(bind=engine)
-
 # 🔗 Inclusion des routes
 app.include_router(auth_router, prefix="/auth")
 app.include_router(orders_router, prefix="/orders")
