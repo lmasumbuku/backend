@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from startup import create_tables_if_not_exist
 from routes.auth import router as auth_router
 from routes.orders import router as orders_router
 from routes.menu import router as menu_router
@@ -9,6 +10,8 @@ from routes.voiceflow_commande import router as voiceflow_commande_router
 from routes.restaurant import router as restaurant_router
 from routes import secure_routes
 from database import Base, engine
+
+create_tables_if_not_exist()
 
 app = FastAPI()
 
