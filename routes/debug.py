@@ -28,3 +28,14 @@ def reset_restaurants():
 
     Base.metadata.create_all(bind=engine, tables=[Restaurant.__table__])
     return {"message": "La table restaurants a été réinitialisée avec succès ✅"}
+
+# ✅ Vérification de la connexion à la base de données
+@router.get("/check-db")
+def check_db():
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return {"message": "Connexion à la base de données réussie ✅"}
+    except Exception as e:
+        return {"error": f"Échec de la connexion à la base de données ❌ : {str(e)}"}
+
