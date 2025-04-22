@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database import get_db, SessionLocal
+from database import get_db
 from models import Restaurant
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from datetime import datetime, timedelta
+from security_utils import hash_password, verify_password, create_access_token  # Import des utils de sécurité
 
 router = APIRouter()
 
@@ -63,7 +64,10 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Utilisateur déjà existant")
 
-    new_user = Restaurant(username=user.username, password=user.password)
+    # Hachage du mot de passe avant de le stocker
+    hashed_pw = hash_password(user.password)
+
+    new_user = Restaurant(username=user.username, password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -73,8 +77,9 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
     restaurateur = db.query(Restaurant).filter(Restaurant.username == user.username).first()
-    if not restaurateur or restaurateur.password != user.password:
+    if not restaurateur or not verify_password(user.password, restaurateur.password):
         raise HTTPException(status_code=401, detail="Identifiants invalides")
 
+    # Création du token d'accès
     token = create_token(restaurateur.username)
     return {"access_token": token, "token_type": "bearer"}
