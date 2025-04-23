@@ -74,9 +74,10 @@ def update_restaurant(restaurant_id: int, updates: RestaurantUpdate, db: Session
     return restaurant
 
 # 🔸 Obtenir un restaurateur via son numéro de téléphone (Voiceflow)
-@router.get("/restaurant-par-numero")
-def get_restaurateur_by_numero(numero: str = Query(...), db: Session = Depends(get_db)):
-    restaurant = db.query(Restaurant).filter(Restaurant.numero_appel == numero).first()
+@router.get("/restaurants/from-number/{number_called}")
+def get_restaurateur_by_numero(number_called: str, db: Session = Depends(get_db)):
+    # Recherche du restaurant par le numéro appelé
+    restaurant = db.query(Restaurant).filter(Restaurant.numero_appel == number_called).first()
 
     if not restaurant:
         raise HTTPException(status_code=404, detail="Aucun restaurant trouvé avec ce numéro")
