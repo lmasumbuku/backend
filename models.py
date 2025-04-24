@@ -26,7 +26,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
-    items = Column(String)
+    items = Column(JSON)
     status = Column(String, default="pending")
 
     restaurant = relationship("Restaurant", back_populates="orders")
