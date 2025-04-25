@@ -63,12 +63,12 @@ class RestaurantOut(BaseModel):
 # 🔹 Order
 class OrderCreate(BaseModel):
     restaurant_id: int
-    items: List[str]
+    items: List[str]  # Liste des éléments dans la commande
 
 class OrderResponse(BaseModel):
     id: int
     restaurant_id: int
-    items: List[str]
+    items: List[str]  # Liste des éléments dans la commande
     status: str
 
     class Config:
