@@ -22,6 +22,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 class UserRegister(BaseModel):
     username: str
     password: str
+    nom_restaurant: str
+    nom_representant: str
+    prenom_representant: str
+    adresse_postale: str
+    email: str
+    numero_appel: str
 
 class UserLogin(BaseModel):
     username: str
@@ -67,7 +73,16 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     # Hachage du mot de passe avant de le stocker
     hashed_pw = hash_password(user.password)
 
-    new_user = Restaurant(username=user.username, password=hashed_pw)
+    new_user = Restaurant(
+        username=user.username,
+        password=hashed_pw,
+        nom_restaurant=user.nom_restaurant,
+        nom_representant=user.nom_representant,
+        prenom_representant=user.prenom_representant,
+        adresse_postale=user.adresse_postale,
+        email=user.email,
+        numero_appel=user.numero_appel,
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
