@@ -9,7 +9,7 @@ class Restaurant(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    password = Column(String)  # Le mot de passe est maintenant stocké en texte haché
+    password = Column(String)  # Le mot de passe est stocké en texte haché
     nom_restaurant = Column(String, nullable=True)
     nom_representant = Column(String, nullable=True)
     prenom_representant = Column(String, nullable=True)
@@ -20,17 +20,15 @@ class Restaurant(Base):
     orders = relationship("Order", back_populates="restaurant")
     menu_items = relationship("MenuItem", back_populates="restaurant")
 
-
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
-    items = Column(String)
+    items = Column(String)  # Assurer que cette colonne existe et contient les éléments de la commande
     status = Column(String, default="pending")
 
     restaurant = relationship("Restaurant", back_populates="orders")
-
 
 class MenuItem(Base):
     __tablename__ = "menu_items"
