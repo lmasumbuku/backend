@@ -88,6 +88,7 @@ def get_restaurateur_by_numero(number_called: str, db: Session = Depends(get_db)
         "menu": [item.name for item in restaurant.menu_items]
     }
 
+# 🔸 Obtenir un restaurateur via son ID
 @router.get("/restaurant/{restaurant_id}")
 def get_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
     restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
