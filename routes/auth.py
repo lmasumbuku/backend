@@ -82,4 +82,6 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     # Création du token d'accès
     token = create_token(restaurateur.username)
-    return {"access_token": token, "token_type": "bearer"}
+
+    # Retourner l'ID du restaurateur avec le token
+    return {"access_token": token, "restaurateur_id": restaurateur.id, "token_type": "bearer"}
