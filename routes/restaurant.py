@@ -12,6 +12,7 @@ from schemas import (
     RestaurantOut,
     LoginRequest,
     TokenResponse,
+    OrderCreate,
 )
 from security_utils import hash_password, verify_password, create_access_token
 
@@ -95,3 +96,18 @@ def get_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant non trouvé")
     return restaurant
+
+# 🔸 Endpoint pour recevoir une commande de l'IA
+@router.post("/orders/ia")
+def create_order_from_ia(order: OrderCreate, db: Session = Depends(get_db)):
+    # Vérifier si le restaurant existe
+    restaurant = db.query(Restaurant).filter(Restaurant.id == order.restaurant_id).first()
+    if not restaurant:
+        raise HTTPException(status_code=404, detail="Restaurant non trouvé")
+
+    # Créer la commande
+    new_order = Order(restaurant_id=order.restaurant_id, items=",".join(order.items), status="pending")
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    return {"message": "Commande prise en charge par l'IA et enregistrée avec succès"}
