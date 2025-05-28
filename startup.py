@@ -3,8 +3,9 @@ from database import Base, engine
 from models import Restaurant, MenuItem, Order
 
 def create_tables_if_not_exist():
-    inspector = inspect(engine)
-    existing_tables = inspector.get_table_names()
+    print("📦 Création des tables si elles n’existent pas...")
+    Base.metadata.create_all(bind=engine)
+    print("✅ Tables prêtes.")
 
     if "restaurants" not in existing_tables:
         print("📦 Table 'restaurants' manquante : création en cours…")
