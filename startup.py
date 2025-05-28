@@ -4,16 +4,20 @@ from models import Restaurant, MenuItem, Order
 
 def create_tables_if_not_exist():
     print("📦 Création des tables si elles n’existent pas...")
-    Base.metadata.create_all(bind=engine)
-    print("✅ Tables prêtes.")
 
+    # Création effective des tables
+    Base.metadata.create_all(bind=engine)
+    
+    # Vérification des tables existantes (après création)
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
+
+    # Affichage de ce qui manque (au cas où)
     if "restaurants" not in existing_tables:
-        print("📦 Table 'restaurants' manquante : création en cours…")
+        print("❗ Table 'restaurants' non trouvée.")
     if "menu_items" not in existing_tables:
-        print("📦 Table 'menu_items' manquante : création en cours…")
+        print("❗ Table 'menu_items' non trouvée.")
     if "orders" not in existing_tables:
-        print("📦 Table 'orders' manquante : création en cours…")
-
-    Base.metadata.create_all(bind=engine)
-
+        print("❗ Table 'orders' non trouvée.")
+    
     print("✅ Vérification terminée : toutes les tables sont prêtes.")
