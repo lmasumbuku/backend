@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://bdd_restaurant_v2_user:bJjw6RPmnJHFBHs8YSovV07DOq3yTqsH@dpg-d0rkma95pdvs73e3aq10-a.oregon-postgres.render.com/bdd_restaurant_v2"
+    "postgresql://bdd_restaurant_prod_user:XsG1H00cwTEdawEBdzXT5hHlWpiXObGO@dpg-d1vjq2mmcj7s73feort0-a.oregon-postgres.render.com/bdd_restaurant_prod"
 )
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
