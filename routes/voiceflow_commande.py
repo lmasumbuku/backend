@@ -2,8 +2,9 @@ from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel
+from routes.auth import decode_token
 
-router = APIRouter()
+router = APIRouter(prefix="/voiceflow-commande")
 
 # Fonction d'accès à la base
 def get_db():
