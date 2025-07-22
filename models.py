@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from database import Base
 from sqlalchemy.orm import relationship
-
-Base = declarative_base()
 
 class Restaurant(Base):
     __tablename__ = "restaurants"
