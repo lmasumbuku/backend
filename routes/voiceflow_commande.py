@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Order
+from models import Order as OrderModel
 
-router = APIRouter(prefix="/voiceflow-commande")
+router = APIRouter()
 
+# Fonction d'accès à la base
 def get_db():
     db = SessionLocal()
     try:
@@ -13,18 +14,19 @@ def get_db():
         db.close()
 
 @router.post("/create")
-async def creer_commande_ia(request: Request, db: Session = Depends(get_db)):
+async def recevoir_commande(request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
-        commande = data.get("commande", "")
+        commande_brute = data.get("commande", "")
         restaurant_id = data.get("restaurant_id")
 
         if not restaurant_id:
             return {"error": "restaurant_id manquant"}
 
-        commande_propre = commande.lstrip(", ").strip()
+        commande_propre = commande_brute.lstrip(", ").strip()
 
-        new_order = Order(
+        # ✅ Enregistrement dans la base
+        new_order = OrderModel(
             restaurant_id=restaurant_id,
             items=commande_propre,
             status="accepted"
@@ -33,9 +35,9 @@ async def creer_commande_ia(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_order)
 
-        print(f"✅ Commande IA enregistrée : {commande_propre} pour restaurant {restaurant_id}")
-
-        return {"message": "Commande IA enregistrée ✅", "order_id": new_order.id}
+        print("✅ Commande IA insérée :", commande_propre)
+        return {"status": "ok", "commande": commande_propre, "order_id": new_order.id}
 
     except Exception as e:
-        return {"error": f"Erreur lors de l'enregistrement : {str(e)}"}
+        print("❌ Erreur JSON :", str(e))
+        return {"error": str(e)}
