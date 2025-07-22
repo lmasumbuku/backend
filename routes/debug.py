@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from database import engine, Base
 from models import MenuItem, Restaurant
 
@@ -39,3 +39,8 @@ def check_db():
     except Exception as e:
         return {"error": f"Échec de la connexion à la base de données ❌ : {str(e)}"}
 
+@router.get("/tables-existantes")
+def list_tables():
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    return {"tables": tables}
