@@ -33,6 +33,7 @@ async def recevoir_commande(request: Request, db: Session = Depends(get_db)):
             restaurant_id=restaurant_id,
             items=commande_propre,
             status="accepted"
+            source="ia"
         )
         db.add(new_order)
         db.commit()
