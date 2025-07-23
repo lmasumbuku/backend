@@ -30,7 +30,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth")
 app.include_router(orders_router, prefix="/orders")
 app.include_router(menu_router, prefix="/menu")
-app.include_router(debug_router)
+app.include_router(debug_router, prefix="/debug")
 app.include_router(vocal_router)
 app.include_router(voiceflow_commande_router, prefix="/voiceflow-commande")
 app.include_router(restaurant_router)
