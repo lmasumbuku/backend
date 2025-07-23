@@ -4,7 +4,7 @@ from database import SessionLocal
 from models import Order as OrderModel
 from routes.auth import decode_token
 
-router = APIRouter(prefix="/voiceflow-commande")
+router = APIRouter()
 
 print("✅ voiceflow_commande.py bien chargé")
 
