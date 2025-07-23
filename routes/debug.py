@@ -48,11 +48,20 @@ def list_tables():
 @router.get("/migrate/add-source-column")
 def add_source_column():
     try:
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             conn.execute(text("""
-                ALTER TABLE orders ADD COLUMN IF NOT EXISTS source VARCHAR DEFAULT 'ia';
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'orders' AND column_name = 'source'
+                    ) THEN
+                        ALTER TABLE orders ADD COLUMN source VARCHAR DEFAULT 'ia';
+                    END IF;
+                END
+                $$;
             """))
-        return {"status": "✅ Colonne 'source' ajoutée avec succès."}
+        return {"status": "✅ Colonne 'source' ajoutée avec succès (vérifiée dynamiquement)."}
     except Exception as e:
         return {"error": str(e)}
 
