@@ -69,3 +69,16 @@ def update_empty_sources():
         return {"status": "✅ Colonnes 'source' mises à jour avec succès."}
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/orders/columns")
+def get_orders_columns():
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'orders';
+            """))
+            columns = [row[0] for row in result]
+            return {"colonnes_orders": columns}
+    except Exception as e:
+        return {"error": str(e)}
