@@ -55,3 +55,7 @@ def create_tables():
         return {"error": str(e)}
 
 app.include_router(create_router)
+
+@app.get("/routes-debug")
+def list_routes():
+    return [{"path": route.path, "methods": list(route.methods)} for route in app.router.routes]
