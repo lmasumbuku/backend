@@ -44,3 +44,14 @@ def list_tables():
     inspector = inspect(engine)
     tables = inspector.get_table_names()
     return {"tables": tables}
+
+@router.get("/migrate/add-source-column")
+def add_source_column():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS source VARCHAR DEFAULT 'ia';
+            """))
+        return {"status": "✅ Colonne 'source' ajoutée avec succès."}
+    except Exception as e:
+        return {"error": str(e)}
