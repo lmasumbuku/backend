@@ -6,6 +6,8 @@ from routes.auth import decode_token
 
 router = APIRouter(prefix="/voiceflow-commande")
 
+print("✅ voiceflow_commande.py bien chargé")
+
 # Fonction d'accès à la base
 def get_db():
     db = SessionLocal()
