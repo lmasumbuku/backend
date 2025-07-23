@@ -55,3 +55,17 @@ def add_source_column():
         return {"status": "✅ Colonne 'source' ajoutée avec succès."}
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/migrate/update-empty-sources")
+def update_empty_sources():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                UPDATE orders
+                SET source = 'ia'
+                WHERE source IS NULL OR source = '';
+            """))
+            conn.commit()
+        return {"status": "✅ Colonnes 'source' mises à jour avec succès."}
+    except Exception as e:
+        return {"error": str(e)}
