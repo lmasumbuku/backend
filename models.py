@@ -25,6 +25,7 @@ class Order(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     items = Column(String)  # Assurer que cette colonne existe et contient les éléments de la commande
     status = Column(String, default="pending")
+    source = Column(String, default="ia")
 
     restaurant = relationship("Restaurant", back_populates="orders")
 
