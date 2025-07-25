@@ -39,7 +39,7 @@ def create_order(order: OrderCreate,
     new_order = OrderModel(
         restaurant_id=current_user.id,
         items=",".join(order.items),
-        status="accepted"  # ✅ Commande acceptée automatiquement
+        status="accepted",  # ✅ Commande acceptée automatiquement
         source=order.source or "web"
     )
     db.add(new_order)
