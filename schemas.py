@@ -64,6 +64,7 @@ class RestaurantOut(BaseModel):
 class OrderCreate(BaseModel):
     restaurant_id: int
     items: List[str]  # Liste des éléments dans la commande
+    source: Optional[str] = None
 
 class OrderResponse(BaseModel):
     id: int
