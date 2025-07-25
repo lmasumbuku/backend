@@ -25,7 +25,8 @@ def get_my_orders(current_user: Restaurant = Depends(decode_token), db: Session 
             "id": order.id,
             "restaurant_id": order.restaurant_id,
             "items": order.items.split(",") if order.items else [],
-            "status": order.status
+            "status": order.status,
+            "source": order.source
         }
         for order in orders
     ]
