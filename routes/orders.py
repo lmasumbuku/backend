@@ -40,6 +40,7 @@ def create_order(order: OrderCreate,
         restaurant_id=current_user.id,
         items=",".join(order.items),
         status="accepted"  # ✅ Commande acceptée automatiquement
+        source=order.source or "web"
     )
     db.add(new_order)
     db.commit()
