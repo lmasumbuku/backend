@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query, status
 from sqlalchemy.orm import Session
-
+from schemas import UpdatePhoneNumber
 from database import get_db
 from models import Restaurant
 from schemas import (
