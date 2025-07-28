@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Order as OrderModel
 from routes.auth import decode_token
+from models import Restaurant
 
 router = APIRouter()
 
@@ -21,10 +22,16 @@ async def recevoir_commande(request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
         commande_brute = data.get("commande", "")
-        restaurant_id = data.get("restaurant_id")
+        numero_appel = data.get("restaurant_id")
 
-        if not restaurant_id:
-            return {"error": "restaurant_id manquant"}
+        if not numero_appel:
+            return {"error": "Le numéro d'appel est manquant."}
+            
+            # Recherche du restaurant correspondant au numéro d'appel
+        restaurant = db.query(Restaurant).filter(Restaurant.numero_appel == numero_appel).first()
+
+        if not restaurant:
+            return {"error": f"Aucun restaurant trouvé avec le numéro {numero_appel}"}
 
         commande_propre = commande_brute.lstrip(", ").strip()
 
@@ -39,7 +46,7 @@ async def recevoir_commande(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_order)
 
-        print("✅ Commande IA insérée :", commande_propre)
+        print("✅ Commande IA insérée pour le restaurant {restaurant.nom_restaurant} :", commande_propre)
         return {"status": "ok", "commande": commande_propre, "order_id": new_order.id}
 
     except Exception as e:
