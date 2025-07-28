@@ -100,4 +100,4 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 class UpdatePhoneNumber(BaseModel):
-    phone_number: str
+    numero_appel: str
