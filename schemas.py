@@ -71,6 +71,7 @@ class OrderResponse(BaseModel):
     restaurant_id: int
     items: List[str]  # Liste des éléments dans la commande
     status: str
+    source: str
 
     class Config:
         from_attributes = True
