@@ -50,7 +50,8 @@ def create_order(order: OrderCreate,
         "id": new_order.id,
         "restaurant_id": new_order.restaurant_id,
         "items": new_order.items.split(","),
-        "status": new_order.status
+        "status": new_order.status,
+        "source": new_order.source
     }
 
 # ✅ Accepter une commande (optionnel)
