@@ -112,13 +112,14 @@ def create_order_from_ia(order: OrderCreate, db: Session = Depends(get_db)):
     db.refresh(new_order)
     return {"message": "Commande prise en charge par l'IA et enregistrée avec succès"}
 
+# ✅ Modifier le numéro d’appel vocal du restaurateur connecté
 @router.put("/restaurants/update-number")
 def update_phone_number(
     data: schemas.UpdatePhoneNumber,
     db: Session = Depends(get_db),
     current_restaurant: models.Restaurant = Depends(get_current_restaurant)
 ):
-    current_restaurant.phone_number = data.phone_number
+    current_restaurant.numero_appel = data.numero_appel
     db.commit()
     db.refresh(current_restaurant)
-    return {"message": "Numéro mis à jour avec succès", "phone_number": current_restaurant.phone_number}
+    return {"message": "Numéro mis à jour avec succès", "numero_appel": current_restaurant.numero_appel}
