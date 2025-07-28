@@ -15,6 +15,7 @@ from schemas import (
     OrderCreate,
 )
 from security_utils import hash_password, verify_password, create_access_token
+from routes.secure_routes import get_current_restaurant
 
 router = APIRouter()
 
