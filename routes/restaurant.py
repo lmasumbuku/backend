@@ -1,10 +1,10 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query, status
 from sqlalchemy.orm import Session
-from schemas import UpdatePhoneNumber
-from database import get_db
-from models import Restaurant
+
+# ✅ Imports Pydantic (on importe explicitement les classes utilisées)
 from schemas import (
+    UpdatePhoneNumber,
     RestaurantBase,
     RestaurantCreate,
     RestaurantUpdate,
@@ -14,10 +14,26 @@ from schemas import (
     TokenResponse,
     OrderCreate,
 )
+
+# ✅ DB / Models
+from database import get_db
+from models import Restaurant, Order as OrderModel  # <- OrderModel importé ici
+
+# ✅ Auth utils
 from security_utils import hash_password, verify_password, create_access_token
 from routes.secure_routes import get_current_restaurant
 
 router = APIRouter()
+
+# Petit helper pour normaliser les numéros (retire espaces, +, etc.)
+def normalize_number(num: str) -> str:
+    if not num:
+        return ""
+    digits = "".join(c for c in str(num) if c.isdigit())
+    # option : 00xx -> xx
+    if digits.startswith("00"):
+        digits = digits[2:]
+    return digits
 
 # 🔸 Créer un restaurant
 @router.post("/restaurants", response_model=RestaurantBase)
@@ -78,16 +94,25 @@ def update_restaurant(restaurant_id: int, updates: RestaurantUpdate, db: Session
 # 🔸 Obtenir un restaurateur via son numéro de téléphone (Voiceflow)
 @router.get("/restaurants/from-number/{number_called}")
 def get_restaurateur_by_numero(number_called: str, db: Session = Depends(get_db)):
-    # Recherche du restaurant par le numéro appelé
-    restaurant = db.query(Restaurant).filter(Restaurant.numero_appel == number_called).first()
+    # Normalisation pour comparer proprement
+    target = normalize_number(number_called)
 
-    if not restaurant:
+    # On récupère tous les restos qui ont un numero_appel défini
+    restaurants = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
+
+    match = None
+    for r in restaurants:
+        if normalize_number(getattr(r, "numero_appel", "")) == target:
+            match = r
+            break
+
+    if not match:
         raise HTTPException(status_code=404, detail="Aucun restaurant trouvé avec ce numéro")
 
     return {
-        "restaurant_id": restaurant.id,
-        "nom_restaurant": restaurant.nom_restaurant,
-        "menu": [item.name for item in restaurant.menu_items]
+        "restaurant_id": match.id,
+        "nom_restaurant": match.nom_restaurant,
+        "menu": [item.name for item in match.menu_items]
     }
 
 # 🔸 Obtenir un restaurateur via son ID
@@ -98,7 +123,7 @@ def get_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Restaurant non trouvé")
     return restaurant
 
-# 🔸 Endpoint pour recevoir une commande de l'IA
+# 🔸 Endpoint pour recevoir une commande de l'IA (legacy interne)
 @router.post("/orders/ia")
 def create_order_from_ia(order: OrderCreate, db: Session = Depends(get_db)):
     # Vérifier si le restaurant existe
@@ -106,19 +131,33 @@ def create_order_from_ia(order: OrderCreate, db: Session = Depends(get_db)):
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant non trouvé")
 
-    # Créer la commande
-    new_order = Order(restaurant_id=order.restaurant_id, items=",".join(order.items), status="pending")
+    # ⚠️ Selon ton modèle DB, items peut être JSON/ARRAY ou TEXT.
+    # Si c'est une colonne texte, on join pour stocker "1 x Pizza, 2 x Coca".
+    items_value = order.items
+    if not isinstance(items_value, list):
+        # sécurité minimale
+        items_value = [str(items_value)]
+
+    # Si ta colonne Order.items est TEXT, décommente la ligne suivante :
+    # items_value = ", ".join(items_value)
+
+    new_order = OrderModel(
+        restaurant_id=order.restaurant_id,
+        items=items_value,       # <-- adapte selon le type de colonne en DB
+        status="pending",
+        source="ia"
+    )
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-    return {"message": "Commande prise en charge par l'IA et enregistrée avec succès"}
+    return {"message": "Commande prise en charge par l'IA et enregistrée avec succès", "order_id": new_order.id}
 
 # ✅ Modifier le numéro d’appel vocal du restaurateur connecté
 @router.put("/restaurants/update-number")
 def update_phone_number(
-    data: schemas.UpdatePhoneNumber,
+    data: UpdatePhoneNumber,                             # <- on utilise la classe importée
     db: Session = Depends(get_db),
-    current_restaurant: models.Restaurant = Depends(get_current_restaurant)
+    current_restaurant: Restaurant = Depends(get_current_restaurant)  # <- type correct
 ):
     current_restaurant.numero_appel = data.numero_appel
     db.commit()
