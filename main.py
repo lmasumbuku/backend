@@ -6,12 +6,12 @@ from routes.orders import router as orders_router
 from routes.menu import router as menu_router
 from routes.debug import router as debug_router
 from routes.vocal_routes import router as vocal_router
-from routes.voiceflow_commande import router as voiceflow_commande_router
 from routes.restaurant import router as restaurant_router
 from routes.status import router as status_router
 from routes import secure_routes
 from routes.init_debug import router as init_debug_router
 from database import Base, engine
+from routes import voice
 
 create_tables_if_not_exist()
 
@@ -37,6 +37,7 @@ app.include_router(restaurant_router)
 app.include_router(secure_routes.router, prefix="/secure", tags=["Secure Routes"])
 app.include_router(init_debug_router)
 app.include_router(status_router)
+app.include_router(voice.router)
 
 # 🌐 Route de base
 @app.get("/")
