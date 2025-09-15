@@ -1,15 +1,24 @@
+# routes/voice.py
 import os
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from sqlalchemy.orm import Session
 from typing import Dict, List
-from models import Restaurant, MenuItem, Order
-from schemas import RestaurantInfo, VoiceOrderIn, OrderOut
-from routes.deps import get_db  # adapte le chemin si besoin
+from database import SessionLocal
+from models import Restaurant, MenuItem, Order as OrderModel
+from schemas import RestaurantInfo, VoiceOrderIn, OrderOut, OrderLineOut, MenuItemOut
 
 router = APIRouter(prefix="/voice", tags=["voice"])
 
-VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
+# --- DB session helper (local pour éviter dépendances externes) ---
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
+# --- Sécurité simple MVP ---
+VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 def require_api_key(x_api_key: str = Header(None)):
     if x_api_key != VOICE_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
@@ -26,25 +35,41 @@ def normalize_number(num: str) -> str:
             response_model=RestaurantInfo,
             dependencies=[Depends(require_api_key)])
 def get_restaurant_by_number(called_number: str, db: Session = Depends(get_db)):
+    """
+    Retourne les infos du restaurant (nom, numero_appel) + son menu actif.
+    On matche sur Restaurant.numero_appel (normalisé).
+    """
     num = normalize_number(called_number)
-    resto = db.query(Restaurant).filter(Restaurant.call_number_normalized == num).first()
-    if not resto:
-        raise HTTPException(status_code=404, detail="Restaurant not found")
-    items = (
-        db.query(MenuItem)
-        .filter(MenuItem.restaurant_id == resto.id, MenuItem.is_active == True)
+    resto = (
+        db.query(Restaurant)
+        .filter(Restaurant.numero_appel.isnot(None))
         .all()
     )
+    # match souple (normalisation)
+    match = None
+    for r in resto:
+        if normalize_number(getattr(r, "numero_appel", "")) == num:
+            match = r
+            break
+    if not match:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    items = (
+        db.query(MenuItem)
+        .filter(MenuItem.restaurant_id == match.id)
+        .all()
+    )
+
     return {
-        "id": resto.id,
-        "name": getattr(resto, "name", None) or getattr(resto, "nom_restaurant", ""),
-        "call_number": getattr(resto, "call_number", None),
+        "id": match.id,
+        "nom_restaurant": getattr(match, "nom_restaurant", None),
+        "numero_appel": getattr(match, "numero_appel", None),
         "menu": [
             {
                 "id": i.id,
                 "name": i.name,
                 "price": i.price,
-                "aliases": i.aliases or [],
+                "aliases": [],  # pas d'aliases en base pour l'instant
             }
             for i in items
         ],
@@ -54,64 +79,66 @@ def get_restaurant_by_number(called_number: str, db: Session = Depends(get_db)):
              response_model=OrderOut,
              dependencies=[Depends(require_api_key)])
 def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)):
+    """
+    Crée une commande structurée à partir d'items (name, quantity, note).
+    - Valide les items sur le menu du restaurant (name exact, insensible à la casse).
+    - Calcule 'total' et renvoie des 'lines' complètes dans la réponse.
+    - Stocke en base Order.items comme une liste de chaînes "QTY x NAME" (compatible avec ton modèle actuel).
+    """
     num = normalize_number(payload.restaurant_number)
-    resto = db.query(Restaurant).filter(Restaurant.call_number_normalized == num).first()
+    # Lookup restaurant
+    restos = (
+        db.query(Restaurant)
+        .filter(Restaurant.numero_appel.isnot(None))
+        .all()
+    )
+    resto = None
+    for r in restos:
+        if normalize_number(getattr(r, "numero_appel", "")) == num:
+            resto = r
+            break
     if not resto:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
-    # Menu map (names + aliases)
+    # Charger le menu
     menu_items = (
         db.query(MenuItem)
-        .filter(MenuItem.restaurant_id == resto.id, MenuItem.is_active == True)
+        .filter(MenuItem.restaurant_id == resto.id)
         .all()
     )
-    by_name = {i.name.lower(): i for i in menu_items}
-    for i in menu_items:
-        for a in (i.aliases or []):
-            by_name[a.lower()] = i
+    # Map nom (lower) -> MenuItem
+    by_name = {i.name.strip().lower(): i for i in menu_items}
 
-    # Build order lines
-    order_lines: List[Dict] = []
+    # Construire les lignes et total
+    lines: List[OrderLineOut] = []
     total = 0.0
     for it in payload.items:
         key = (it.name or "").strip().lower()
         mi = by_name.get(key)
         if not mi:
             raise HTTPException(status_code=400, detail=f"Item not in menu: {it.name}")
-        qty = max(1, it.quantity or 1)
+        qty = max(1, int(it.quantity or 1))
         line_total = mi.price * qty
         total += line_total
-        order_lines.append(
-            {
-                "menu_item_id": mi.id,
-                "name": mi.name,
-                "unit_price": mi.price,
-                "quantity": qty,
-                "note": it.note or "",
-            }
-        )
+        lines.append(OrderLineOut(name=mi.name, unit_price=mi.price, quantity=qty, note=it.note or ""))
 
-    # Idempotence on callSid (if provided)
-    if payload.meta and payload.meta.get("callSid"):
-        existing = (
-            db.query(Order)
-            .filter(
-                Order.restaurant_id == resto.id,
-                Order.meta["callSid"].astext == payload.meta["callSid"],
-            )
-            .first()
-        )
-        if existing:
-            return existing
-
-    order = Order.create_voice_order(
-        db=db,
+    # Stockage compatible avec ton modèle actuel (Order.items: List[str])
+    items_str = [f"{l.quantity} x {l.name}" for l in lines]
+    new_order = OrderModel(
         restaurant_id=resto.id,
-        items=order_lines,
-        customer_phone=payload.customer_phone,
-        customer_name=payload.customer_name,
-        channel=payload.channel,
-        meta=payload.meta,
-        total=round(total, 2),
+        items=items_str,
+        status="accepted",   # cohérent avec ton précédent code
+        source="ia"
     )
-    return order
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    # Réponse enrichie (OrderOut) calculée à la volée
+    return OrderOut(
+        id=new_order.id,
+        restaurant_id=resto.id,
+        total=round(total, 2),
+        status=new_order.status,
+        lines=lines
+    )
