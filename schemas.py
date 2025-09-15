@@ -101,3 +101,58 @@ class TokenResponse(BaseModel):
 
 class UpdatePhoneNumber(BaseModel):
     numero_appel: str
+
+# --- AJOUTS POUR L'API /voice ---
+
+from typing import Any, Dict  # <- ajouter en haut si pas présent
+
+# ✅ Réponse menu avec alias pour la reco vocale
+class MenuItemOut(BaseModel):
+    id: int
+    name: str
+    price: float
+    aliases: Optional[List[str]] = []
+
+    class Config:
+        from_attributes = True
+
+# ✅ Infos restaurant pour le lookup par numéro appelé
+class RestaurantInfo(BaseModel):
+    id: int
+    # on garde la cohérence avec tes noms actuels
+    nom_restaurant: Optional[str]
+    numero_appel: Optional[str]
+    # le backend remplira aussi call_number si tu l'ajoutes plus tard
+    menu: List[MenuItemOut]
+
+# ✅ Élément structuré du panier envoyé par le bot
+class BasketItem(BaseModel):
+    name: str
+    quantity: int
+    note: Optional[str] = None
+
+# ✅ Payload standardisé pour créer une commande depuis le bot vocal
+class VoiceOrderIn(BaseModel):
+    restaurant_number: str              # numéro appelé (format libre, on normalise côté backend)
+    customer_phone: Optional[str] = None
+    customer_name: Optional[str] = None
+    items: List[BasketItem]             # liste structurée (nom, quantité, note)
+    channel: str = "voice"
+    meta: Optional[Dict[str, Any]] = {} # ex: {"callSid": "CA..."} pour l'idempotence
+
+# ✅ Sortie "jolie" d'une commande (même si ta DB n'a pas encore OrderLine)
+class OrderLineOut(BaseModel):
+    name: str
+    unit_price: float
+    quantity: int
+    note: str = ""
+
+class OrderOut(BaseModel):
+    id: int
+    restaurant_id: int
+    total: float
+    status: str
+    lines: List[OrderLineOut]
+
+    class Config:
+        from_attributes = True
