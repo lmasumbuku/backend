@@ -22,10 +22,14 @@ def get_db():
 # ---------------- Auth simple (X-API-Key) ----------------
 VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
-def require_api_key(x_api_key: str = Header(None)):
-    if x_api_key != VOICE_API_KEY:
+def require_api_key(
+    x_api_key: str = Header(default=None),
+    key: str = Query(default=None)   # fallback en query string
+):
+    provided = x_api_key or key
+    if provided != VOICE_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
-
+        
 # ---------------- Utils ----------------
 def normalize_number(num: str) -> str:
     if not num:
