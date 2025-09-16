@@ -142,3 +142,24 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
         status=new_order.status,
         lines=lines
     )
+
+from fastapi import Request
+
+@router.get("/voice/restaurant/by-number/{restaurant_number}")
+async def get_restaurant_by_number(restaurant_number: str, request: Request, db: Session = Depends(get_db)):
+    # Log tous les headers reçus
+    headers = dict(request.headers)
+    print("==== HEADERS RECUS ====")
+    for k, v in headers.items():
+        print(f"{k}: {v}")
+    print("=======================")
+
+    # Ici, tu continues ton traitement normal
+    restaurant = db.query(Restaurant).filter(Restaurant.number == restaurant_number).first()
+    if not restaurant:
+        return {"error": "Restaurant not found"}
+
+    return {
+        "restaurant_name": restaurant.name,
+        "menu": [item.name for item in restaurant.menu_items]
+    }
