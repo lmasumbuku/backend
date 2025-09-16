@@ -2,7 +2,7 @@
 import os
 from typing import List
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Query
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
