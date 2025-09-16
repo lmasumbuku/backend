@@ -36,7 +36,7 @@ app.include_router(restaurant_router)
 app.include_router(secure_routes.router, prefix="/secure", tags=["Secure Routes"])
 app.include_router(init_debug_router)
 app.include_router(status_router)
-app.include_router(voice.router)
+app.include_router(voice_router)
 
 # 🌐 Route de base
 @app.get("/")
