@@ -24,10 +24,13 @@ VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
 def require_api_key(
     x_api_key: str = Header(default=None),
-    key: str = Query(default=None)   # fallback en query string
+    key: str = Query(default=None),
 ):
-    provided = x_api_key or key
-    if provided != VOICE_API_KEY:
+    provided_raw = x_api_key or key or ""
+    provided = unquote_plus(provided_raw).strip()
+    expected = (VOICE_API_KEY or "").strip()
+
+    if not provided or not secrets.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Invalid API key")
         
 # ---------------- Utils ----------------
