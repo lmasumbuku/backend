@@ -9,6 +9,7 @@ from database import SessionLocal
 from models import Restaurant, MenuItem, Order as OrderModel
 from schemas import RestaurantInfo, VoiceOrderIn, OrderOut, OrderLineOut
 from urllib.parse import unquote_plus
+import secrets
 
 router = APIRouter(prefix="/voice", tags=["voice"])
 
