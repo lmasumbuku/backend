@@ -11,23 +11,6 @@ from schemas import RestaurantInfo, VoiceOrderIn, OrderOut, OrderLineOut
 
 router = APIRouter(prefix="/voice", tags=["voice"])
 
-# --- DEBUG: ping public sans clé, pour valider la connectivité depuis l'extérieur ---
-@router.get("/ping")
-def voice_ping():
-    print("PING /voice/ping")
-    return {"ok": True}
-
-# --- DEBUG: echo headers public (sans clé) ---
-from fastapi import Request
-
-@router.get("/debug/headers")
-def voice_headers(request: Request):
-    print("==== /voice/debug/headers ====")
-    for k, v in request.headers.items():
-        print(f"{k}: {v}")
-    print("================================")
-    return {"headers": dict(request.headers)}
-
 # ------------------------------------------------------------
 # DB session helper
 # ------------------------------------------------------------
@@ -190,3 +173,16 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
         status=new_order.status,
         lines=lines,
     )
+
+@router.get("/ping")
+def voice_ping():
+    print("PING /voice/ping OK")
+    return {"ok": True}
+
+@router.get("/debug/headers")
+def voice_headers(request: Request):
+    print("==== /voice/debug/headers ====")
+    for k, v in request.headers.items():
+        print(f"{k}: {v}")
+    print("================================")
+    return {"headers": dict(request.headers)}
