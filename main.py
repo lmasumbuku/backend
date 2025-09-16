@@ -11,7 +11,7 @@ from routes.status import router as status_router
 from routes import secure_routes
 from routes.init_debug import router as init_debug_router
 from database import Base, engine
-from routes.voice import voice_router
+from voice import voice
 
 create_tables_if_not_exist()
 
