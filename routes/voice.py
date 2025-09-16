@@ -22,14 +22,12 @@ def get_db():
         db.close()
 
 # ------------------------------------------------------------
-# Sécurité simple MVP via X-API-Key
+# Sécurité via X-API-Key
 # ------------------------------------------------------------
 VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
 def require_api_key(x_api_key: str = Header(None)):
-    """
-    Attend un header HTTP 'X-API-Key' (insensible à la casse côté FastAPI).
-    """
+    # FastAPI matchera indifféremment 'X-API-Key' / 'x-api-key' côté client
     if x_api_key != VOICE_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
@@ -37,11 +35,6 @@ def require_api_key(x_api_key: str = Header(None)):
 # Utils
 # ------------------------------------------------------------
 def normalize_number(num: str) -> str:
-    """
-    Conserve uniquement les chiffres.
-    Supprime le préfixe 00 si présent (ex: 00337... -> 337...).
-    Le but est d'autoriser les formats +33..., 0033..., 0...
-    """
     if not num:
         return ""
     digits = "".join(c for c in str(num) if c.isdigit())
@@ -50,8 +43,23 @@ def normalize_number(num: str) -> str:
     return digits
 
 # ------------------------------------------------------------
-# GET /voice/restaurant/by-number/{called_number}
-# Retourne les infos du resto + son menu (forme attendue par Voiceflow)
+# DEBUG endpoints (publics, sans clé)
+# ------------------------------------------------------------
+@router.get("/ping")
+def voice_ping():
+    print("PING /voice/ping")
+    return {"ok": True}
+
+@router.get("/debug/headers")
+def voice_headers(request: Request):
+    print("==== /voice/debug/headers ====")
+    for k, v in request.headers.items():
+        print(f"{k}: {v}")
+    print("================================")
+    return {"headers": dict(request.headers)}
+
+# ------------------------------------------------------------
+# GET menu par numéro appelé (protégé)
 # ------------------------------------------------------------
 @router.get(
     "/restaurant/by-number/{called_number}",
@@ -63,7 +71,7 @@ def get_restaurant_by_number(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    # 🔎 DEBUG: log des headers reçus (visible dans les logs Render)
+    # Logs debug pour voir la requête qui arrive réellement
     print("==== HEADERS RECUS ====")
     for k, v in request.headers.items():
         print(f"{k}: {v}")
@@ -71,7 +79,6 @@ def get_restaurant_by_number(
 
     num = normalize_number(called_number)
 
-    # On parcourt les restos avec un numero_appel non nul et on matche en normalisant
     restos = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
     match = None
     for r in restos:
@@ -89,19 +96,13 @@ def get_restaurant_by_number(
         "nom_restaurant": getattr(match, "nom_restaurant", None),
         "numero_appel": getattr(match, "numero_appel", None),
         "menu": [
-            {
-                "id": i.id,
-                "name": i.name,
-                "price": i.price,
-                "aliases": [],  # pas d'aliases en base pour l’instant
-            }
+            {"id": i.id, "name": i.name, "price": i.price, "aliases": []}
             for i in items
         ],
     }
 
 # ------------------------------------------------------------
-# POST /voice/order
-# Crée une commande structurée depuis Voiceflow
+# POST order (protégé)
 # ------------------------------------------------------------
 @router.post(
     "/order",
@@ -109,29 +110,20 @@ def get_restaurant_by_number(
     dependencies=[Depends(require_api_key)],
 )
 def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)):
-    """
-    - Identifie le restaurant via restaurant_number (normalisé vs numero_appel).
-    - Valide les items (name) sur le menu du resto (insensible à la casse).
-    - Calcule le total, enregistre la commande et renvoie un OrderOut.
-    """
     num = normalize_number(payload.restaurant_number)
 
-    # Lookup restaurant par numero_appel
     restos = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
     resto = None
     for r in restos:
         if normalize_number(getattr(r, "numero_appel", "")) == num:
             resto = r
             break
-
     if not resto:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
-    # Charger le menu
     menu_items = db.query(MenuItem).filter(MenuItem.restaurant_id == resto.id).all()
     by_name = {i.name.strip().lower(): i for i in menu_items}
 
-    # Construire lignes + total
     lines: List[OrderLineOut] = []
     total = 0.0
 
@@ -153,7 +145,6 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
             )
         )
 
-    # Stockage compatible avec le modèle Order actuel (items: List[str])
     items_str = [f"{l.quantity} x {l.name}" for l in lines]
 
     new_order = OrderModel(
@@ -173,16 +164,3 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
         status=new_order.status,
         lines=lines,
     )
-
-@router.get("/ping")
-def voice_ping():
-    print("PING /voice/ping OK")
-    return {"ok": True}
-
-@router.get("/debug/headers")
-def voice_headers(request: Request):
-    print("==== /voice/debug/headers ====")
-    for k, v in request.headers.items():
-        print(f"{k}: {v}")
-    print("================================")
-    return {"headers": dict(request.headers)}
