@@ -11,9 +11,7 @@ from schemas import RestaurantInfo, VoiceOrderIn, OrderOut, OrderLineOut
 
 router = APIRouter(prefix="/voice", tags=["voice"])
 
-# ------------------------------------------------------------
-# DB session helper
-# ------------------------------------------------------------
+# ---------------- DB session ----------------
 def get_db():
     db = SessionLocal()
     try:
@@ -21,19 +19,14 @@ def get_db():
     finally:
         db.close()
 
-# ------------------------------------------------------------
-# Sécurité via X-API-Key
-# ------------------------------------------------------------
+# ---------------- Auth simple (X-API-Key) ----------------
 VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
 def require_api_key(x_api_key: str = Header(None)):
-    # FastAPI matchera indifféremment 'X-API-Key' / 'x-api-key' côté client
     if x_api_key != VOICE_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
-# ------------------------------------------------------------
-# Utils
-# ------------------------------------------------------------
+# ---------------- Utils ----------------
 def normalize_number(num: str) -> str:
     if not num:
         return ""
@@ -42,12 +35,10 @@ def normalize_number(num: str) -> str:
         digits = digits[2:]
     return digits
 
-# ------------------------------------------------------------
-# DEBUG endpoints (publics, sans clé)
-# ------------------------------------------------------------
+# ---------------- DEBUG endpoints (sans clé) ----------------
 @router.get("/ping")
 def voice_ping():
-    print("PING /voice/ping")
+    print("PING /voice/ping OK")
     return {"ok": True}
 
 @router.get("/debug/headers")
@@ -58,9 +49,7 @@ def voice_headers(request: Request):
     print("================================")
     return {"headers": dict(request.headers)}
 
-# ------------------------------------------------------------
-# GET menu par numéro appelé (protégé)
-# ------------------------------------------------------------
+# ---------------- GET: menu par numéro appelé ----------------
 @router.get(
     "/restaurant/by-number/{called_number}",
     response_model=RestaurantInfo,
@@ -71,7 +60,7 @@ def get_restaurant_by_number(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    # Logs debug pour voir la requête qui arrive réellement
+    # log headers pour vérification Voiceflow
     print("==== HEADERS RECUS ====")
     for k, v in request.headers.items():
         print(f"{k}: {v}")
@@ -101,9 +90,7 @@ def get_restaurant_by_number(
         ],
     }
 
-# ------------------------------------------------------------
-# POST order (protégé)
-# ------------------------------------------------------------
+# ---------------- POST: créer une commande ----------------
 @router.post(
     "/order",
     response_model=OrderOut,
@@ -118,6 +105,7 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
         if normalize_number(getattr(r, "numero_appel", "")) == num:
             resto = r
             break
+
     if not resto:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
@@ -126,16 +114,13 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
 
     lines: List[OrderLineOut] = []
     total = 0.0
-
     for it in payload.items:
         key = (it.name or "").strip().lower()
         mi = by_name.get(key)
         if not mi:
             raise HTTPException(status_code=400, detail=f"Item not in menu: {it.name}")
         qty = max(1, int(it.quantity or 1))
-        line_total = (mi.price or 0) * qty
-        total += line_total
-
+        total += (mi.price or 0) * qty
         lines.append(
             OrderLineOut(
                 name=mi.name,
@@ -148,10 +133,7 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
     items_str = [f"{l.quantity} x {l.name}" for l in lines]
 
     new_order = OrderModel(
-        restaurant_id=resto.id,
-        items=items_str,
-        status="accepted",
-        source="ia",
+        restaurant_id=resto.id, items=items_str, status="accepted", source="ia"
     )
     db.add(new_order)
     db.commit()
