@@ -1,19 +1,27 @@
 # routes/voice.py
 import os
-from typing import List
+import secrets
+from urllib.parse import unquote_plus
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
+from typing import List
 
 from database import SessionLocal
 from models import Restaurant, MenuItem, Order as OrderModel
-from schemas import RestaurantInfo, VoiceOrderIn, OrderOut, OrderLineOut
-from urllib.parse import unquote, unquote_plus
-import secrets
+from schemas import (
+    RestaurantInfo,
+    VoiceOrderIn,
+    OrderOut,
+    OrderLineOut,
+)
 
-router = APIRouter(prefix="/voice", tags=["voice"])
+# ============================================================
+#  Config & helpers
+# ============================================================
 
-# ---------------- DB session ----------------
+VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
+
 def get_db():
     db = SessionLocal()
     try:
@@ -21,36 +29,22 @@ def get_db():
     finally:
         db.close()
 
-# ---------------- Auth simple (X-API-Key) ----------------
-VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
-
-def _normalize_key(value: str | None) -> str:
-    """Décodage et nettoyage très tolérant pour éviter les faux négatifs."""
-    if not value:
-        return ""
-    # On tente plusieurs décodages possibles puis on trim
-    v = value.strip()
-    v = unquote_plus(v)  # décodage des + comme espaces
-    v = unquote(v)       # décodage %xx
-    v = v.replace("\u200b", "")  # zero-width (copier/coller)
-    return v.strip()
-
-def require_api_key(
-    x_api_key: str | None = Header(default=None),  # header
-    key: str | None = Query(default=None),         # query fallback
-):
-    expected = _normalize_key(VOICE_API_KEY)
-    provided = _normalize_key(x_api_key or key)
-
-    # Optionnel : activer un petit log de debug si besoin
-    # print(f"[AUTH] expected=[{expected}] provided=[{provided}] raw_header=[{x_api_key}] raw_query=[{key}]")
-
-    if not expected:
+def require_api_key(x_api_key: str = Header(None)):
+    """
+    Authentifie via le HEADER HTTP 'x-api-key' uniquement.
+    (Pas de query string, pas de fallback.)
+    """
+    expected = VOICE_API_KEY
+    if not expected or expected == "change-me":
+        # Sécurité minimale : on refuse si la clé serveur est mal configurée
         raise HTTPException(status_code=500, detail="Server API key not configured")
+
+    # Décode proprement le header si Cloudflare/Proxy encode des caractères spéciaux
+    provided = (unquote_plus(x_api_key).strip() if x_api_key else None)
+
     if not provided or not secrets.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Invalid API key")
-        
-# ---------------- Utils ----------------
+
 def normalize_number(num: str) -> str:
     if not num:
         return ""
@@ -59,92 +53,108 @@ def normalize_number(num: str) -> str:
         digits = digits[2:]
     return digits
 
-# ---------------- DEBUG endpoints (sans clé) ----------------
+# ============================================================
+#  Router (protège TOUTES les routes /voice/*)
+# ============================================================
+
+router = APIRouter(
+    prefix="/voice",
+    tags=["voice"],
+    dependencies=[Depends(require_api_key)],
+)
+
+# --- Santé / debug (protégés) --------------------------------
+
 @router.get("/ping")
-def voice_ping():
-    print("PING /voice/ping OK")
+def ping():
     return {"ok": True}
 
 @router.get("/debug/headers")
-def voice_headers(request: Request):
-    print("==== /voice/debug/headers ====")
-    for k, v in request.headers.items():
-        print(f"{k}: {v}")
-    print("================================")
+async def debug_headers(request: Request):
+    # Utile si tu veux vérifier ce que Voiceflow envoie en prod
     return {"headers": dict(request.headers)}
 
-# ---------------- GET: menu par numéro appelé ----------------
+# ============================================================
+#  Endpoints métier
+# ============================================================
+
 @router.get(
     "/restaurant/by-number/{called_number}",
     response_model=RestaurantInfo,
-    dependencies=[Depends(require_api_key)],
 )
-def get_restaurant_by_number(
-    called_number: str,
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    # log headers pour vérification Voiceflow
-    print("==== HEADERS RECUS ====")
-    for k, v in request.headers.items():
-        print(f"{k}: {v}")
-    print("=======================")
-
+def get_restaurant_by_number(called_number: str, db: Session = Depends(get_db)):
+    """
+    Retourne le restaurant associé à 'called_number' + son menu.
+    """
     num = normalize_number(called_number)
 
+    # Recherche souple par numéro normalisé
+    resto_match = None
     restos = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
-    match = None
     for r in restos:
         if normalize_number(getattr(r, "numero_appel", "")) == num:
-            match = r
+            resto_match = r
             break
 
-    if not match:
+    if not resto_match:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
-    items = db.query(MenuItem).filter(MenuItem.restaurant_id == match.id).all()
+    items = db.query(MenuItem).filter(MenuItem.restaurant_id == resto_match.id).all()
 
     return {
-        "id": match.id,
-        "nom_restaurant": getattr(match, "nom_restaurant", None),
-        "numero_appel": getattr(match, "numero_appel", None),
+        "id": resto_match.id,
+        "nom_restaurant": getattr(resto_match, "nom_restaurant", None),
+        "numero_appel": getattr(resto_match, "numero_appel", None),
         "menu": [
-            {"id": i.id, "name": i.name, "price": i.price, "aliases": []}
-            for i in items
+            {
+                "id": it.id,
+                "name": it.name,
+                "price": it.price,
+                "aliases": [],  # pas d'aliases pour l’instant
+            }
+            for it in items
         ],
     }
 
-# ---------------- POST: créer une commande ----------------
 @router.post(
     "/order",
     response_model=OrderOut,
-    dependencies=[Depends(require_api_key)],
 )
 def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)):
+    """
+    Crée une commande à partir d'items (name, quantity, note),
+    valide les produits avec le menu du restaurant et calcule le total.
+    """
     num = normalize_number(payload.restaurant_number)
 
-    restos = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
+    # 1) Trouver le restaurant
     resto = None
+    restos = db.query(Restaurant).filter(Restaurant.numero_appel.isnot(None)).all()
     for r in restos:
         if normalize_number(getattr(r, "numero_appel", "")) == num:
             resto = r
             break
-
     if not resto:
         raise HTTPException(status_code=404, detail="Restaurant not found")
 
+    # 2) Charger le menu
     menu_items = db.query(MenuItem).filter(MenuItem.restaurant_id == resto.id).all()
     by_name = {i.name.strip().lower(): i for i in menu_items}
 
+    # 3) Construire les lignes + total
     lines: List[OrderLineOut] = []
     total = 0.0
+
     for it in payload.items:
         key = (it.name or "").strip().lower()
         mi = by_name.get(key)
         if not mi:
             raise HTTPException(status_code=400, detail=f"Item not in menu: {it.name}")
+
         qty = max(1, int(it.quantity or 1))
-        total += (mi.price or 0) * qty
+        line_total = mi.price * qty
+        total += line_total
+
         lines.append(
             OrderLineOut(
                 name=mi.name,
@@ -154,15 +164,19 @@ def create_order_from_voice(payload: VoiceOrderIn, db: Session = Depends(get_db)
             )
         )
 
+    # 4) Persister une commande simple (items sous forme "QTY x NAME")
     items_str = [f"{l.quantity} x {l.name}" for l in lines]
-
     new_order = OrderModel(
-        restaurant_id=resto.id, items=items_str, status="accepted", source="ia"
+        restaurant_id=resto.id,
+        items=items_str,
+        status="accepted",
+        source="ia",
     )
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
 
+    # 5) Réponse
     return OrderOut(
         id=new_order.id,
         restaurant_id=resto.id,
