@@ -24,14 +24,29 @@ def get_db():
 # ---------------- Auth simple (X-API-Key) ----------------
 VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
-def require_api_key(
-    x_api_key: str = Header(default=None),
-    key: str = Query(default=None),
-):
-    provided_raw = x_api_key or key or ""
-    provided = unquote_plus(provided_raw).strip()
-    expected = (VOICE_API_KEY or "").strip()
+def _normalize_key(value: str | None) -> str:
+    """Décodage et nettoyage très tolérant pour éviter les faux négatifs."""
+    if not value:
+        return ""
+    # On tente plusieurs décodages possibles puis on trim
+    v = value.strip()
+    v = unquote_plus(v)  # décodage des + comme espaces
+    v = unquote(v)       # décodage %xx
+    v = v.replace("\u200b", "")  # zero-width (copier/coller)
+    return v.strip()
 
+def require_api_key(
+    x_api_key: str | None = Header(default=None),  # header
+    key: str | None = Query(default=None),         # query fallback
+):
+    expected = _normalize_key(VOICE_API_KEY)
+    provided = _normalize_key(x_api_key or key)
+
+    # Optionnel : activer un petit log de debug si besoin
+    # print(f"[AUTH] expected=[{expected}] provided=[{provided}] raw_header=[{x_api_key}] raw_query=[{key}]")
+
+    if not expected:
+        raise HTTPException(status_code=500, detail="Server API key not configured")
     if not provided or not secrets.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Invalid API key")
         
