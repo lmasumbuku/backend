@@ -162,6 +162,17 @@ class RestaurantInfo(BaseModel):
 # -------------------------------------------------------------------
 # Endpoints
 # -------------------------------------------------------------------
+@router.get("/debug/headers")
+async def debug_headers(request: Request, key: Optional[str] = Query(None)):
+    """Renvoie les headers reçus pour vérifier que x-api-key arrive bien.
+       (Param ?key=... optionnel juste pour comparaison visuelle)"""
+    hdrs = dict(request.headers)
+    return {
+        "headers": {k: hdrs.get(k) for k in ["host", "user-agent", "x-api-key", "cf-connecting-ip"]},
+        "has_x_api_key": bool(hdrs.get("x-api-key")),
+        "query_key": key
+    }
+
 @router.get("/ping")
 def ping(_: Any = Depends(require_api_key)):
     return {"ok": True}
