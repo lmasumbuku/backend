@@ -42,37 +42,36 @@ def require_api_key(
     x_api_key: Optional[str] = Header(default=None, convert_underscores=False),
     key: Optional[str] = Query(default=None)
 ):
-    """
-    Autorise soit:
-      - header 'x-api-key: <clé>'
-      - query '?key=<clé>'
-    """
     provided_raw = x_api_key or key
-    if provided_raw is None:
-        raise HTTPException(status_code=401, detail="Missing API key")
-
-    # Voiceflow encode parfois les '!' et '$' => on normalise
+    if provided_raw is None or str(provided_raw).strip() == "":
+        raise HTTPException(status_code=401, detail="Missing API key (use x-api-key header or ?key=)")
     provided = unquote_plus(str(provided_raw)).strip()
-    expected = str(VOICE_API_KEY).strip()
-
-    if not provided or not expected or not secrets.compare_digest(provided, expected):
+    expected = str(VOICE_API_KEY or "").strip()
+    if not expected:
+        raise HTTPException(status_code=500, detail="Server misconfigured: VOICE_API_KEY not set")
+    if not secrets.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 # -------------------------------------------------------------------
 # Utils
 # -------------------------------------------------------------------
 def normalize_number(num: str) -> str:
+    """
+    Normalise tout en chiffres uniquement pour une comparaison robuste :
+    - supprime espaces, -, +, etc.
+    - convertit 00... -> enlève les deux premiers 0 (ex: 0033 -> 33)
+    - gère '0' initial France -> 33...
+    Retourne une chaîne de chiffres (pas de '+').
+    """
     if not num:
         return ""
-    digits = "".join(c for c in str(num) if c.isdigit() or c == "+")
-    # On tolère +33 / 0033 / 33 / 0…
-    digits = digits.replace(" ", "")
-    digits = digits.replace("-", "")
+    digits = "".join(c for c in str(num) if c.isdigit())
+    # 00 -> retire le 00 international
     if digits.startswith("00"):
-        digits = "+" + digits[2:]
+        digits = digits[2:]
+    # Cas France: si on reçoit un 0 initial (10 chiffres FR), on “internationalise” en 33
     if digits.startswith("0") and len(digits) >= 10:
-        # FR: 0X XX XX XX XX  -> +33X…
-        digits = "+33" + digits[1:]
+        digits = "33" + digits[1:]
     return digits
 
 def safe_aliases(value: Any) -> List[str]:
