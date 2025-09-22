@@ -39,7 +39,7 @@ def get_db():
 VOICE_API_KEY = os.getenv("VOICE_API_KEY", "change-me")
 
 def require_api_key(
-    x_api_key: Optional[str] = Header(default=None, convert_underscores=False),
+    x_api_key: Optional[str] = Header(default=None),
     key: Optional[str] = Query(default=None)
 ):
     provided_raw = x_api_key or key
